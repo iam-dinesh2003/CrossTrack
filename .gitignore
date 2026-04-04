@@ -1,6 +1,6 @@
 # ─── Java / Spring Boot ───
 crosstrack-api/target/
-crosstrack-api/.mvn/
+crosstrack-api/.mvn/wrapper/maven-wrapper.jar
 crosstrack-api/*.jar
 crosstrack-api/uploads/
 
@@ -29,6 +29,7 @@ crosstrack-api/src/main/resources/application.properties
 # ─── Logs ───
 *.log
 logs/
+nohup.out
 
 # ─── Build ───
 *.class
