@@ -21,6 +21,7 @@ import InterviewPrepPage from './components/ai/InterviewPrepPage';
 import MockInterviewPage from './components/ai/MockInterviewPage';
 import InterviewNotesPage from './components/ai/InterviewNotesPage';
 import ResumesPage from './components/resumes/ResumesPage';
+import PrivacyPolicy from './components/PrivacyPolicy';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
 
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
