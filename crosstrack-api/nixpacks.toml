@@ -1,0 +1,5 @@
+[phases.build]
+cmds = ["./mvnw package -DskipTests -q"]
+
+[start]
+cmd = "java -jar target/crosstrack-api-0.0.1-SNAPSHOT.jar"
