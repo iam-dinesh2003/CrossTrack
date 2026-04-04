@@ -24,7 +24,6 @@ Thumbs.db
 *.env
 *.env.local
 application-local.properties
-crosstrack-api/src/main/resources/application.properties
 
 # ─── Logs ───
 *.log
