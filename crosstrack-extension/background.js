@@ -103,7 +103,7 @@ function checkDuplicate(company, role, applications) {
 
 // ─── API Configuration ───
 
-const API_BASE = "http://localhost:8080/api";
+const API_BASE = "https://crosstrack-production.up.railway.app/api";
 
 async function getApiToken() {
   const data = await chrome.storage.local.get("apiToken");

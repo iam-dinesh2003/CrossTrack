@@ -2,7 +2,7 @@
 // CrossTrack — Popup Script
 // ══════════════════════════════════════════════════
 
-const API_BASE = "http://localhost:8080/api";
+const API_BASE = "https://crosstrack-production.up.railway.app/api";
 
 const PLATFORM_COLORS = {
   linkedin: "#0A66C2",
@@ -37,7 +37,7 @@ function setupEventListeners() {
 
   // Dashboard button
   document.getElementById("dashboardBtn").addEventListener("click", () => {
-    chrome.tabs.create({ url: "http://localhost:5173" });
+    chrome.tabs.create({ url: "https://cross-track-five.vercel.app" });
   });
 
   // Refresh
@@ -181,7 +181,7 @@ function setupEventListeners() {
         errorEl.style.display = "block";
       }
     } catch (err) {
-      errorEl.textContent = "Cannot connect to API. Is Spring Boot running on port 8080?";
+      errorEl.textContent = "Cannot connect to CrossTrack API. Please try again.";
       errorEl.style.display = "block";
     }
 
