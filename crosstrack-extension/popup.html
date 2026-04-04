@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrossTrack</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <span class="logo-icon">&#10010;</span>
+        <span class="logo-text">CrossTrack</span>
+      </div>
+      <div class="header-actions">
+        <button id="refreshBtn" class="icon-btn" title="Refresh">&#8635;</button>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value" id="totalCount">0</div>
+        <div class="stat-label">Total</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="weekCount">0</div>
+        <div class="stat-label">This Week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="interviewCount">0</div>
+        <div class="stat-label">Interviews</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="ghostedCount">0</div>
+        <div class="stat-label">Ghosted</div>
+      </div>
+    </div>
+
+    <!-- Quick Add -->
+    <div id="quickAddSection" class="quick-add">
+      <button id="quickAddToggle" class="btn btn-primary btn-add">&#43; Track Application</button>
+      <div id="quickAddForm" style="display:none" class="quick-add-form">
+        <input type="text" id="addCompany" placeholder="Company (e.g. Google)" class="api-input" />
+        <input type="text" id="addRole" placeholder="Role (e.g. Software Engineer)" class="api-input" />
+        <select id="addPlatform" class="api-input">
+          <option value="linkedin">LinkedIn</option>
+          <option value="indeed">Indeed</option>
+          <option value="handshake">Handshake</option>
+          <option value="other">Other</option>
+        </select>
+        <input type="text" id="addUrl" placeholder="Job URL (optional)" class="api-input" />
+        <div class="quick-add-actions">
+          <button id="quickAddCancel" class="btn btn-ghost btn-sm">Cancel</button>
+          <button id="quickAddSave" class="btn btn-primary btn-sm">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="applied">Applied</button>
+      <button class="filter-btn" data-filter="interviewing">Interview</button>
+      <button class="filter-btn" data-filter="ghosted">Ghosted</button>
+    </div>
+
+    <!-- Applications List -->
+    <div class="app-list" id="appList">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">&#128188;</div>
+        <p>No applications tracked yet.</p>
+        <p class="empty-sub">Apply to jobs on LinkedIn, Indeed, or Handshake and they'll appear here!</p>
+      </div>
+    </div>
+
+    <!-- API Connection -->
+    <div class="api-section" id="apiSection">
+      <!-- Connected State -->
+      <div id="apiConnected" style="display:none" class="api-connected">
+        <div class="api-status-row">
+          <span class="sync-dot connected"></span>
+          <span class="api-email" id="apiEmail">Connected</span>
+        </div>
+        <div class="api-actions">
+          <button id="syncAllBtn" class="btn btn-ghost btn-sm">Sync All</button>
+          <button id="disconnectBtn" class="btn btn-ghost btn-sm btn-danger">Disconnect</button>
+        </div>
+      </div>
+      <!-- Disconnected State -->
+      <div id="apiDisconnected" class="api-login">
+        <p class="api-label">Connect to Dashboard API</p>
+        <input type="email" id="apiEmailInput" placeholder="Email" class="api-input" />
+        <input type="password" id="apiPasswordInput" placeholder="Password" class="api-input" />
+        <button id="apiLoginBtn" class="btn btn-primary btn-sm">Connect</button>
+        <p class="api-error" id="apiError" style="display:none"></p>
+      </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <div class="footer">
+      <button id="dashboardBtn" class="btn btn-primary">Open Dashboard</button>
+      <div class="footer-row">
+        <button id="loadTestBtn" class="btn btn-ghost">Load Test Data</button>
+        <button id="clearBtn" class="btn btn-ghost btn-danger">Clear All</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+# ─── Java / Spring Boot ───
+crosstrack-api/target/
+crosstrack-api/.mvn/
+crosstrack-api/*.jar
+crosstrack-api/uploads/
+
+# ─── Node / React ───
+crosstrack-dashboard/node_modules/
+crosstrack-dashboard/dist/
+crosstrack-dashboard/.env
+
+# ─── IDE ───
+.idea/
+.vscode/
+*.iml
+.cursor/
+.agents/
+
+# ─── OS ───
+.DS_Store
+Thumbs.db
+
+# ─── Sensitive Files ───
+*.env
+*.env.local
+application-local.properties
+crosstrack-api/src/main/resources/application.properties
+
+# ─── Logs ───
+*.log
+logs/
+
+# ─── Build ───
+*.class
+*.war
+
+# ─── Claude ───
+.claude/

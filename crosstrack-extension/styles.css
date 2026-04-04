@@ -1,0 +1,115 @@
+/* ══════════════════════════════════════════════════
+   CrossTrack — Injected Page Styles
+   (Duplicate Warning Banner)
+   ══════════════════════════════════════════════════ */
+
+#crosstrack-warning {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999999;
+  animation: crosstrack-slideDown 0.3s ease-out;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+.crosstrack-banner {
+  background: #FFF3CD;
+  border-bottom: 3px solid #F59E0B;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.crosstrack-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.crosstrack-banner-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.crosstrack-banner-text {
+  flex: 1;
+  font-size: 14px;
+  color: #1E293B;
+  line-height: 1.4;
+}
+
+.crosstrack-banner-text strong {
+  color: #92400E;
+}
+
+.crosstrack-banner-text p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #64748B;
+}
+
+.crosstrack-banner-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.crosstrack-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.crosstrack-btn-warn {
+  background: #F59E0B;
+  color: #fff;
+}
+
+.crosstrack-btn-warn:hover {
+  background: #D97706;
+}
+
+.crosstrack-btn-cancel {
+  background: #E2E8F0;
+  color: #475569;
+}
+
+.crosstrack-btn-cancel:hover {
+  background: #CBD5E1;
+}
+
+.crosstrack-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #94A3B8;
+  cursor: pointer;
+  padding: 4px 8px;
+  flex-shrink: 0;
+}
+
+.crosstrack-close:hover {
+  color: #475569;
+}
+
+.crosstrack-progress {
+  height: 3px;
+  background: #F59E0B;
+  animation: crosstrack-timer 15s linear forwards;
+}
+
+@keyframes crosstrack-slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes crosstrack-timer {
+  from { width: 100%; }
+  to { width: 0%; }
+}

@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "CrossTrack - Job Application Tracker",
+  "version": "1.4.0",
+  "description": "Passively detects job applications across LinkedIn, Indeed, and Handshake with duplicate detection and ghost job tracking.",
+  "permissions": ["storage", "tabs", "activeTab", "scripting", "alarms"],
+  "host_permissions": [
+    "https://*.linkedin.com/*",
+    "https://*.indeed.com/*",
+    "https://*.joinhandshake.com/*",
+    "http://localhost:8080/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.linkedin.com/*",
+        "https://*.indeed.com/*",
+        "https://*.joinhandshake.com/*"
+      ],
+      "js": ["injector.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://*.linkedin.com/*",
+        "https://*.indeed.com/*",
+        "https://*.joinhandshake.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "CrossTrack"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

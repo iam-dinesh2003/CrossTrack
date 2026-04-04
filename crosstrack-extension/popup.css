@@ -1,0 +1,430 @@
+/* ══════════════════════════════════════════════════
+   CrossTrack — Popup Styles
+   ══════════════════════════════════════════════════ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  width: 380px;
+  max-height: 600px;
+  overflow-y: auto;
+  background: #FFFFFF;
+  color: #1E293B;
+}
+
+#app {
+  padding: 0;
+}
+
+/* ─── Header ─── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #E2E8F0;
+  background: #FAFAFF;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-icon {
+  font-size: 18px;
+  color: #6C5CE7;
+  font-weight: bold;
+}
+
+.logo-text {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1E3A5F;
+}
+
+.header-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #94A3B8;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.icon-btn:hover {
+  background: #F1F5F9;
+  color: #475569;
+}
+
+/* ─── Stats ─── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 12px 16px;
+  background: #FAFAFF;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 8px 4px;
+  background: #FFFFFF;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #6C5CE7;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+/* ─── Quick Add ─── */
+.quick-add {
+  padding: 10px 16px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.btn-add {
+  padding: 8px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+.quick-add-form {
+  margin-top: 8px;
+}
+
+.quick-add-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.quick-add-actions .btn {
+  flex: 1;
+}
+
+/* ─── Filters ─── */
+.filters {
+  display: flex;
+  gap: 6px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.filter-btn {
+  padding: 5px 12px;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  background: #fff;
+  font-size: 12px;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.filter-btn:hover {
+  background: #F0EEFF;
+}
+
+.filter-btn.active {
+  background: #6C5CE7;
+  color: #fff;
+  border-color: #6C5CE7;
+}
+
+/* ─── Application List ─── */
+.app-list {
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.app-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #F1F5F9;
+  transition: background 0.15s;
+  cursor: default;
+}
+
+.app-item:hover {
+  background: #FAFAFF;
+}
+
+.app-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.app-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-company {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1E293B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-role {
+  font-size: 11px;
+  color: #64748B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+.app-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.platform-badge {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.platform-linkedin { background: #E8F0FE; color: #0A66C2; }
+.platform-indeed { background: #EDE9FE; color: #6C5CE7; }
+.platform-handshake { background: #FFF7ED; color: #E4522B; }
+.platform-manual { background: #F1F5F9; color: #64748B; }
+
+.status-select {
+  font-size: 10px;
+  padding: 2px 4px;
+  border: 1px solid #E2E8F0;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  color: #64748B;
+}
+
+.app-date {
+  font-size: 10px;
+  color: #94A3B8;
+}
+
+/* ─── Empty State ─── */
+.empty-state {
+  text-align: center;
+  padding: 30px 20px;
+  color: #94A3B8;
+}
+
+.empty-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.empty-sub {
+  font-size: 11px;
+  color: #CBD5E1;
+}
+
+/* ─── Footer ─── */
+.footer {
+  padding: 12px 16px;
+  border-top: 1px solid #E2E8F0;
+  background: #FAFAFF;
+}
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-primary {
+  background: #6C5CE7;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #5B4BD5;
+}
+
+.footer-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-ghost {
+  background: none;
+  color: #64748B;
+  font-size: 11px;
+  padding: 6px;
+  flex: 1;
+}
+
+.btn-ghost:hover {
+  background: #F1F5F9;
+}
+
+.btn-danger {
+  color: #EF4444;
+}
+
+.btn-danger:hover {
+  background: #FEF2F2;
+}
+
+.sync-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 10px;
+  color: #94A3B8;
+}
+
+.sync-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+}
+
+/* ─── API Connection Section ─── */
+.api-section {
+  padding: 12px 16px;
+  border-top: 1px solid #E2E8F0;
+  background: #F8FAFC;
+}
+
+.api-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748B;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.api-input {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-bottom: 6px;
+  background: #fff;
+  color: #1E293B;
+}
+
+.api-input:focus {
+  outline: none;
+  border-color: #6C5CE7;
+  box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.15);
+}
+
+.api-error {
+  font-size: 11px;
+  color: #EF4444;
+  margin-top: 4px;
+}
+
+.api-connected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.api-status-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sync-dot.connected {
+  background: #10B981;
+}
+
+.api-email {
+  font-size: 11px;
+  color: #10B981;
+  font-weight: 600;
+}
+
+.api-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 11px;
+  width: auto;
+}
+
+/* ─── Scrollbar ─── */
+.app-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.app-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-list::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 2px;
+}
