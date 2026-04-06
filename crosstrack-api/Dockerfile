@@ -11,7 +11,11 @@ COPY --from=build /app/target/crosstrack-api-*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", \
   "-XX:+UseContainerSupport", \
-  "-XX:MaxRAMPercentage=75.0", \
+  "-Xms64m", \
+  "-Xmx256m", \
+  "-XX:MetaspaceSize=64m", \
+  "-XX:MaxMetaspaceSize=128m", \
+  "-XX:+UseSerialGC", \
   "-XX:+ExitOnOutOfMemoryError", \
   "-Djava.security.egd=file:/dev/./urandom", \
   "-jar", "app.jar"]
