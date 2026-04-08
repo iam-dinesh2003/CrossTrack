@@ -193,27 +193,30 @@ public class GmailController {
         String name = user.getDisplayName() != null ? user.getDisplayName() : "Unknown";
         String email = user.getEmail();
 
-        // Send email in background thread so HTTP response returns immediately
-        new Thread(() -> {
-            try {
-                SimpleMailMessage message = new SimpleMailMessage();
-                message.setFrom(fromEmail);
-                message.setTo(DEVELOPER_EMAIL);
-                message.setSubject("CrossTrack - Gmail Access Request");
-                message.setText(
-                    "A user is requesting Gmail access for CrossTrack.\n\n" +
-                    "Name: " + name + "\n" +
-                    "Email: " + email + "\n\n" +
-                    "Please add them as a test user in Google Cloud Console:\n" +
-                    "https://console.cloud.google.com/apis/credentials/consent\n\n" +
-                    "— CrossTrack"
-                );
-                mailSender.send(message);
-                log.info("[Gmail] Access request sent for user {}", email);
-            } catch (Exception e) {
-                log.error("[Gmail] Failed to send access request for {}: {}", email, e.getMessage());
-            }
-        }).start();
+        if (fromEmail == null || fromEmail.isBlank()) {
+            log.error("[Gmail] MAIL_USERNAME not configured — cannot send access request");
+            return ResponseEntity.status(500).body(Map.of("error", "Email not configured on server. Contact dineshnannapaneni9@gmail.com directly."));
+        }
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(DEVELOPER_EMAIL);
+            message.setSubject("CrossTrack - Gmail Access Request");
+            message.setText(
+                "A user is requesting Gmail access for CrossTrack.\n\n" +
+                "Name: " + name + "\n" +
+                "Email: " + email + "\n\n" +
+                "Please add them as a test user in Google Cloud Console:\n" +
+                "https://console.cloud.google.com/apis/credentials/consent\n\n" +
+                "— CrossTrack"
+            );
+            mailSender.send(message);
+            log.info("[Gmail] Access request sent for user {}", email);
+        } catch (Exception e) {
+            log.error("[Gmail] Failed to send access request for {}: {}", email, e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to send email: " + e.getMessage()));
+        }
 
         return ResponseEntity.ok(Map.of("message", "Request sent!"));
     }
