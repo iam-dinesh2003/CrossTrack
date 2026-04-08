@@ -28,6 +28,10 @@ export const disconnectAccount = (accountId) =>
 export const updateAccountLabel = (accountId, label) =>
   api.put(`/gmail/accounts/${accountId}/label`, { label }).then(res => res.data);
 
+// Request developer to add this user as a Google OAuth test user
+export const requestGmailAccess = () =>
+  api.post('/gmail/request-access').then(res => res.data);
+
 // Get ghost level summary
 export const getGhostSummary = () =>
   api.get('/gmail/ghost-summary').then(res => res.data);

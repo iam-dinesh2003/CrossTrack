@@ -6,7 +6,10 @@ import com.crosstrack.api.service.GmailService;
 import com.crosstrack.api.service.GhostScheduler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +25,12 @@ public class GmailController {
     private final GmailService gmailService;
     private final GhostScheduler ghostScheduler;
     private final UserRepository userRepository;
+    private final JavaMailSender mailSender;
+
+    @Value("${spring.mail.username:}")
+    private String fromEmail;
+
+    private static final String DEVELOPER_EMAIL = "dineshnannapaneni8@gmail.com";
 
     private Long getUserId(Authentication auth) {
         User user = userRepository.findByEmail(auth.getName())
@@ -170,6 +179,37 @@ public class GmailController {
         Long userId = getUserId(auth);
         gmailService.updateAccountLabel(userId, accountId, body.get("label"));
         return ResponseEntity.ok(Map.of("status", "updated"));
+    }
+
+    /**
+     * POST /api/gmail/request-access
+     * Sends an email to the developer asking them to add this user as a Google OAuth test user.
+     */
+    @PostMapping("/request-access")
+    public ResponseEntity<Map<String, String>> requestAccess(Authentication auth) {
+        User user = userRepository.findByEmail(auth.getName())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        String name = user.getDisplayName() != null ? user.getDisplayName() : "Unknown";
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(DEVELOPER_EMAIL);
+            message.setSubject("CrossTrack - Gmail Access Request");
+            message.setText(
+                "A user is requesting Gmail access for CrossTrack.\n\n" +
+                "Name: " + name + "\n" +
+                "Email: " + user.getEmail() + "\n\n" +
+                "Please add them as a test user in Google Cloud Console:\n" +
+                "https://console.cloud.google.com/apis/credentials/consent\n\n" +
+                "— CrossTrack"
+            );
+            mailSender.send(message);
+            log.info("[Gmail] Access request sent for user {}", user.getEmail());
+        } catch (Exception e) {
+            log.error("[Gmail] Failed to send access request for {}: {}", user.getEmail(), e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to send request. Please try again."));
+        }
+        return ResponseEntity.ok(Map.of("message", "Request sent!"));
     }
 
     // ═══════════════════════════════════════════════════

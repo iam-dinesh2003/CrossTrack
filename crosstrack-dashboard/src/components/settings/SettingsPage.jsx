@@ -92,6 +92,17 @@ export default function SettingsPage() {
     },
   });
 
+  // Request Gmail access mutation
+  const requestAccessMutation = useMutation({
+    mutationFn: gmailService.requestGmailAccess,
+    onSuccess: () => {
+      toast.success('Request sent! You\'ll be added within 24 hours.');
+    },
+    onError: () => {
+      toast.error('Failed to send request. Please try again.');
+    },
+  });
+
   // Scan emails mutation
   const scanMutation = useMutation({
     mutationFn: gmailService.scanEmails,
@@ -230,10 +241,23 @@ export default function SettingsPage() {
                   Cross Track is pending Google's OAuth verification. Until then, only approved test users can connect Gmail. If you try to connect and see an <span className="font-semibold">"Access blocked"</span> error, follow these steps:
                 </p>
                 <ol className="text-sm text-amber-700 space-y-1 list-decimal list-inside">
-                  <li>Email <a href="mailto:dineshnannapaneni8@gmail.com" className="font-semibold underline hover:text-amber-900">dineshnannapaneni8@gmail.com</a> with the Gmail address you want to use</li>
+                  <li>Click the button below to send an access request to the developer</li>
                   <li>You'll be added as a test user within 24 hours</li>
                   <li>Once added, come back here and click "Connect Gmail Account" — it will work</li>
                 </ol>
+                <button
+                  onClick={() => requestAccessMutation.mutate()}
+                  disabled={requestAccessMutation.isPending || requestAccessMutation.isSuccess}
+                  className="mt-2 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {requestAccessMutation.isPending ? (
+                    <><Loader2 size={14} className="animate-spin" /> Sending...</>
+                  ) : requestAccessMutation.isSuccess ? (
+                    <><Check size={14} /> Request sent! You'll be added within 24 hours</>
+                  ) : (
+                    'Request Access'
+                  )}
+                </button>
                 <p className="text-xs text-amber-600 mt-1">
                   This is a one-time step. Google requires all apps using Gmail to go through a verification process, which is in progress.
                 </p>
