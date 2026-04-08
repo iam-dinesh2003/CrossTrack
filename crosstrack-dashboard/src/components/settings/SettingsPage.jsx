@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
-import { User, Bell, Shield, Palette, Save, Check, Mail, RefreshCw, Unlink, Loader2, Plus, Tag } from 'lucide-react';
+import { User, Bell, Shield, Palette, Save, Check, Mail, RefreshCw, Unlink, Loader2, Plus, Tag, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import clsx from 'clsx';
 import * as gmailService from '../../services/gmailService';
@@ -217,6 +217,27 @@ export default function SettingsPage() {
                   )}
                 </button>
               )}
+            </div>
+
+            {/* Google Verification Warning */}
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex gap-3">
+              <AlertTriangle size={20} className="text-amber-500 shrink-0 mt-0.5" />
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-amber-800">
+                  Action required before connecting Gmail
+                </p>
+                <p className="text-sm text-amber-700">
+                  Cross Track is pending Google's OAuth verification. Until then, only approved test users can connect Gmail. If you try to connect and see an <span className="font-semibold">"Access blocked"</span> error, follow these steps:
+                </p>
+                <ol className="text-sm text-amber-700 space-y-1 list-decimal list-inside">
+                  <li>Email <a href="mailto:dineshnannapaneni8@gmail.com" className="font-semibold underline hover:text-amber-900">dineshnannapaneni8@gmail.com</a> with the Gmail address you want to use</li>
+                  <li>You'll be added as a test user within 24 hours</li>
+                  <li>Once added, come back here and click "Connect Gmail Account" — it will work</li>
+                </ol>
+                <p className="text-xs text-amber-600 mt-1">
+                  This is a one-time step. Google requires all apps using Gmail to go through a verification process, which is in progress.
+                </p>
+              </div>
             </div>
 
             {/* Connected Accounts List */}
