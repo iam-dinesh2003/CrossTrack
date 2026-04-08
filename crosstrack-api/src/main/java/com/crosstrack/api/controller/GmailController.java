@@ -30,7 +30,7 @@ public class GmailController {
     @Value("${spring.mail.username:}")
     private String fromEmail;
 
-    private static final String DEVELOPER_EMAIL = "dineshnannapaneni8@gmail.com";
+    private static final String DEVELOPER_EMAIL = "dineshnannapaneni9@gmail.com";
 
     private Long getUserId(Authentication auth) {
         User user = userRepository.findByEmail(auth.getName())
