@@ -35,6 +35,11 @@ public class OtpService {
      * Generate a 6-digit OTP, save it to the user, and send via email.
      */
     public Map<String, String> sendOtp(String email) {
+        if (fromEmail == null || fromEmail.isBlank()) {
+            log.error("[OTP] MAIL_USERNAME is not configured. Set MAIL_USERNAME and MAIL_PASSWORD environment variables.");
+            throw new RuntimeException("Email service is not configured. Please contact the administrator.");
+        }
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("No account found with this email"));
 

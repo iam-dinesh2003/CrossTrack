@@ -46,6 +46,8 @@ public class GmailService {
     private final ApplicationRepository applicationRepository;
     private final GmailAccountRepository gmailAccountRepository;
     private final EmailClassifier emailClassifier;
+    private final AiService aiService;
+    private final RateLimitService rateLimitService;
 
     @Value("${google.client.id:}")
     private String clientId;
@@ -324,13 +326,36 @@ public class GmailService {
                     continue;
                 }
 
+                // ── Layer 7: LLM fallback — only when ALL rule-based layers failed ──
+                String llmCompany = null;
+                String llmRole = null;
                 if (result.getCompany() == null && result.getRole() == null) {
-                    log.info("[Gmail] SKIP (no company or role extracted): {}", subject);
-                    continue;
+                    if (rateLimitService.allowRequest(user.getId(), RateLimitService.Category.EMAIL_PARSE)) {
+                        log.info("[Gmail] Attempting LLM fallback extraction for: {}", subject);
+                        Map<String, Object> llmResult = aiService.extractJobDetailsFromEmail(body, subject, from);
+                        double confidence = llmResult.get("confidence") instanceof Number
+                            ? ((Number) llmResult.get("confidence")).doubleValue() : 0.0;
+                        if (confidence >= 0.6) {
+                            Object c = llmResult.get("company");
+                            Object r = llmResult.get("role");
+                            llmCompany = (c != null && !c.toString().equalsIgnoreCase("null")) ? c.toString() : null;
+                            llmRole = (r != null && !r.toString().equalsIgnoreCase("null")) ? r.toString() : null;
+                            log.info("[Gmail] LLM extracted — company='{}', role='{}', confidence={}", llmCompany, llmRole, confidence);
+                        }
+                    } else {
+                        log.info("[Gmail] EMAIL_PARSE rate limit reached, skipping LLM fallback for: {}", subject);
+                    }
+
+                    if (llmCompany == null && llmRole == null) {
+                        log.info("[Gmail] SKIP (no company or role after all layers): {}", subject);
+                        continue;
+                    }
                 }
 
-                String company = result.getCompany() != null ? result.getCompany() : "Unknown Company";
-                String role = result.getRole() != null ? result.getRole() : "Unknown Role";
+                String company = llmCompany != null ? llmCompany
+                    : (result.getCompany() != null ? result.getCompany() : "Unknown Company");
+                String role = llmRole != null ? llmRole
+                    : (result.getRole() != null ? result.getRole() : "Unknown Role");
 
                 // ── Layer 5: Thread mining — if role is still unknown, try the thread ──
                 if ("Unknown Role".equals(role)) {
@@ -736,21 +761,43 @@ public class GmailService {
         StringBuilder query = new StringBuilder();
 
         query.append("(");
+        // ATS platforms (sender domain)
         query.append("from:greenhouse.io OR from:lever.co OR from:workday.com ");
         query.append("OR from:icims.com OR from:smartrecruiters.com OR from:ashbyhq.com ");
         query.append("OR from:joinhandshake.com OR from:jobvite.com OR from:myworkdayjobs.com ");
+        query.append("OR from:taleo.net OR from:successfactors.com OR from:brassring.com ");
+        query.append("OR from:bamboohr.com OR from:rippling.com ");
+        // LinkedIn (multiple sender addresses)
         query.append("OR from:jobs-noreply@linkedin.com ");
-        query.append("OR from:indeed.com ");
+        query.append("OR from:noreply@linkedin.com ");
+        query.append("OR from:jobalerts-noreply@linkedin.com ");
+        // Indeed
+        query.append("OR from:indeed.com OR from:indeedemail.com ");
+        // Common company recruiting email patterns
         query.append("OR from:careers@ OR from:recruiting@ OR from:talent@ OR from:hiring@ ");
+        query.append("OR from:hr@ OR from:jobs@ ");
+        // Subject patterns — comprehensive coverage
         query.append("OR subject:\"thank you for applying\" ");
+        query.append("OR subject:\"thank you for your application\" ");
+        query.append("OR subject:\"thanks for applying\" ");
         query.append("OR subject:\"application received\" ");
+        query.append("OR subject:\"application confirmation\" ");
+        query.append("OR subject:\"application submitted\" ");
+        query.append("OR subject:\"we received your application\" ");
         query.append("OR subject:\"your application\" ");
         query.append("OR subject:\"you applied\" ");
+        query.append("OR subject:\"applied to\" ");
+        query.append("OR subject:\"application for\" ");
         query.append("OR subject:\"interview scheduled\" ");
         query.append("OR subject:\"schedule an interview\" ");
+        query.append("OR subject:\"interview invitation\" ");
+        query.append("OR subject:\"phone screen\" ");
         query.append("OR subject:\"offer letter\" ");
+        query.append("OR subject:\"job offer\" ");
         query.append("OR subject:\"regret to inform\" ");
         query.append("OR subject:\"moving forward with other\" ");
+        query.append("OR subject:\"not moving forward\" ");
+        query.append("OR subject:\"next steps\" ");
         query.append(")");
 
         long thirtyDaysAgo = Instant.now().getEpochSecond() - (30L * 24 * 60 * 60);

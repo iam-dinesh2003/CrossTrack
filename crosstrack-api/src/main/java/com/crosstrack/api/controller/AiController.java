@@ -95,6 +95,26 @@ public class AiController {
         ));
     }
 
+    // ── Resume Bullet Tailor (for extension sidebar) ──
+    @PostMapping("/tailor-resume")
+    public ResponseEntity<?> tailorResume(Authentication auth,
+                                          @RequestBody Map<String, Object> body) {
+        User user = getUser(auth);
+        if (!rateLimitService.allowRequest(user.getId(), RateLimitService.Category.GENERATION)) {
+            return ResponseEntity.status(429).body(Map.of("error", "Daily generation limit reached. Resets at midnight."));
+        }
+        String resumeText = (String) body.get("resumeText");
+        String jobDescription = (String) body.get("jobDescription");
+        if (resumeText == null || jobDescription == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "resumeText and jobDescription are required"));
+        }
+        @SuppressWarnings("unchecked")
+        java.util.List<String> targetBullets = body.get("targetBullets") instanceof java.util.List
+            ? (java.util.List<String>) body.get("targetBullets")
+            : java.util.List.of();
+        return ResponseEntity.ok(aiService.tailorResumeBullets(resumeText, jobDescription, targetBullets));
+    }
+
     // ── Application Autopsy ──
     @PostMapping("/application-autopsy")
     public ResponseEntity<Map<String, Object>> applicationAutopsy(Authentication auth,

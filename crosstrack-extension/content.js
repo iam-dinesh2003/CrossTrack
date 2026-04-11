@@ -383,6 +383,11 @@
         status: "applied",
       };
       log("Job detected:", job.company, "—", job.role);
+
+      // Show ATS sidebar when a new job is detected
+      if (window.CrossTrackSidebar) {
+        window.CrossTrackSidebar.show(lastDetectedJob);
+      }
     }
     return lastDetectedJob;
   }

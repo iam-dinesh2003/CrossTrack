@@ -26,13 +26,17 @@ public class RateLimitService {
     @Value("${crosstrack.ai.daily-generation-limit:10}")
     private int dailyGenerationLimit;
 
+    @Value("${crosstrack.ai.daily-email-parse-limit:20}")
+    private int dailyEmailParseLimit;
+
     // Key: "userId:category:date" → count
     private final ConcurrentHashMap<String, Integer> counters = new ConcurrentHashMap<>();
 
     public enum Category {
         CHAT(30),          // Coach chat messages
         SEARCH(15),        // Web searches
-        GENERATION(10);    // Cover letters, follow-up emails, interview prep
+        GENERATION(10),    // Cover letters, follow-up emails, interview prep
+        EMAIL_PARSE(20);   // LLM fallback for unknown role/company in email scan
 
         final int defaultLimit;
         Category(int defaultLimit) { this.defaultLimit = defaultLimit; }
@@ -91,6 +95,7 @@ public class RateLimitService {
             case CHAT -> dailyChatLimit;
             case SEARCH -> dailySearchLimit;
             case GENERATION -> dailyGenerationLimit;
+            case EMAIL_PARSE -> dailyEmailParseLimit;
         };
     }
 }

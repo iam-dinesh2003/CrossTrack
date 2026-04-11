@@ -110,6 +110,17 @@ async function getApiToken() {
   return data.apiToken || null;
 }
 
+// ─── Resume text cache (session-scoped, cleared on token change) ───
+
+async function getCachedResumeText() {
+  const data = await chrome.storage.session.get("cachedResumeText");
+  return data.cachedResumeText || null;
+}
+
+async function cacheResumeText(text) {
+  await chrome.storage.session.set({ cachedResumeText: text });
+}
+
 async function saveApiToken(token, email) {
   await chrome.storage.local.set({ apiToken: token, apiEmail: email });
 }
@@ -319,6 +330,131 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           if (result.synced) synced++;
         }
         return { synced, total: allApps.length };
+      }
+
+      // ── Sidebar AI actions ──
+
+      case "GET_ATS_SCORE": {
+        const atsToken = await getApiToken();
+        if (!atsToken) return { error: "Not logged in to CrossTrack." };
+
+        // Fetch default resume text (cache in session storage to avoid repeated calls)
+        let resumeText = await getCachedResumeText();
+        if (!resumeText) {
+          try {
+            const resumeResp = await fetch(`${API_BASE}/resumes/default`, {
+              headers: { "Authorization": `Bearer ${atsToken}` },
+            });
+            if (!resumeResp.ok) return { error: "No default resume found. Please upload one in CrossTrack." };
+            const resumeData = await resumeResp.json();
+            resumeText = resumeData.parsedText || "";
+            if (!resumeText) return { error: "Resume has no parsed text. Please re-upload your resume." };
+            await cacheResumeText(resumeText);
+          } catch (e) {
+            return { error: "Failed to fetch resume from CrossTrack." };
+          }
+        }
+
+        try {
+          const scoreResp = await fetch(`${API_BASE}/ai/match-score`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${atsToken}`,
+            },
+            body: JSON.stringify({
+              resumeText,
+              jobDescription: message.data.jobDescription,
+            }),
+          });
+          if (scoreResp.status === 429) return { error: "Daily AI limit reached. Resets at midnight." };
+          if (!scoreResp.ok) return { error: "Score request failed." };
+          return await scoreResp.json();
+        } catch (e) {
+          return { error: "Network error reaching CrossTrack API." };
+        }
+      }
+
+      case "GENERATE_COVER_LETTER": {
+        const clToken = await getApiToken();
+        if (!clToken) return { error: "Not logged in to CrossTrack." };
+
+        let clResumeText = await getCachedResumeText();
+        if (!clResumeText) {
+          try {
+            const resumeResp = await fetch(`${API_BASE}/resumes/default`, {
+              headers: { "Authorization": `Bearer ${clToken}` },
+            });
+            if (resumeResp.ok) {
+              const resumeData = await resumeResp.json();
+              clResumeText = resumeData.parsedText || "";
+              if (clResumeText) await cacheResumeText(clResumeText);
+            }
+          } catch (e) { /* fall through with empty resume */ }
+        }
+
+        try {
+          const clResp = await fetch(`${API_BASE}/ai/cover-letter`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${clToken}`,
+            },
+            body: JSON.stringify({
+              resumeText: clResumeText || "",
+              jobDescription: message.data.jobDescription,
+              company: message.data.company,
+              role: message.data.role,
+              tone: "professional but warm",
+            }),
+          });
+          if (clResp.status === 429) return { error: "Daily AI limit reached. Resets at midnight." };
+          if (!clResp.ok) return { error: "Cover letter request failed." };
+          return await clResp.json();
+        } catch (e) {
+          return { error: "Network error reaching CrossTrack API." };
+        }
+      }
+
+      case "TAILOR_RESUME_BULLETS": {
+        const trToken = await getApiToken();
+        if (!trToken) return { error: "Not logged in to CrossTrack." };
+
+        let trResumeText = await getCachedResumeText();
+        if (!trResumeText) {
+          try {
+            const resumeResp = await fetch(`${API_BASE}/resumes/default`, {
+              headers: { "Authorization": `Bearer ${trToken}` },
+            });
+            if (resumeResp.ok) {
+              const resumeData = await resumeResp.json();
+              trResumeText = resumeData.parsedText || "";
+              if (trResumeText) await cacheResumeText(trResumeText);
+            }
+          } catch (e) { /* fall through */ }
+        }
+
+        if (!trResumeText) return { error: "No resume found. Please upload one in CrossTrack." };
+
+        try {
+          const trResp = await fetch(`${API_BASE}/ai/tailor-resume`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${trToken}`,
+            },
+            body: JSON.stringify({
+              resumeText: trResumeText,
+              jobDescription: message.data.jobDescription,
+              targetBullets: [],
+            }),
+          });
+          if (trResp.status === 429) return { error: "Daily AI limit reached. Resets at midnight." };
+          if (!trResp.ok) return { error: "Tailor request failed." };
+          return await trResp.json();
+        } catch (e) {
+          return { error: "Network error reaching CrossTrack API." };
+        }
       }
 
       default:

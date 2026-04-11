@@ -534,6 +534,112 @@ public class AiService {
     }
 
     // ════════════════════════════════════════════
+    //  EMAIL JOB DETAILS EXTRACTION (LLM LAYER 7)
+    // ════════════════════════════════════════════
+
+    /**
+     * Last-resort extraction: called when all 6 rule-based layers in EmailClassifier
+     * fail to identify company and role. Sends the email to Gemini for semantic extraction.
+     *
+     * @param emailBody    Full email body text (will be truncated to 2000 chars)
+     * @param emailSubject Subject line
+     * @param senderFrom   From header (e.g. "Cisco Careers <hiring@cisco.com>")
+     * @return Map with keys: company, role, status, confidence (0.0-1.0), reasoning
+     */
+    public Map<String, Object> extractJobDetailsFromEmail(String emailBody, String emailSubject, String senderFrom) {
+        String systemPrompt = """
+            You are a job application email parser. Extract the company name and job role from a job-related email.
+
+            Rules:
+            - Only extract what is explicitly stated in the email. Do NOT guess or infer.
+            - If you cannot determine a field with high confidence (>0.7), set it to null.
+            - company: The hiring company name (not a job board like LinkedIn/Indeed/Greenhouse)
+            - role: The specific job title (e.g. "Software Engineer", "Product Manager")
+            - status: One of APPLIED, INTERVIEW, OFFER, REJECTED — based on email content
+            - confidence: Your overall confidence score between 0.0 and 1.0
+
+            Respond in EXACTLY this JSON format (no markdown, no code blocks):
+            {
+              "company": "<company name or null>",
+              "role": "<job title or null>",
+              "status": "<APPLIED|INTERVIEW|OFFER|REJECTED|null>",
+              "confidence": <0.0-1.0>,
+              "reasoning": "<one sentence explanation>"
+            }
+            """;
+
+        // Truncate body to 2000 chars to control token cost
+        String truncatedBody = emailBody != null && emailBody.length() > 2000
+            ? emailBody.substring(0, 2000)
+            : (emailBody != null ? emailBody : "");
+
+        String userPrompt = String.format(
+            "FROM: %s\nSUBJECT: %s\n\nEMAIL BODY:\n%s",
+            senderFrom != null ? senderFrom : "",
+            emailSubject != null ? emailSubject : "",
+            truncatedBody
+        );
+
+        String response = callLlm(systemPrompt, userPrompt);
+        return parseJsonResponse(response, Map.of(
+            "company", (Object) null,
+            "role", (Object) null,
+            "status", (Object) null,
+            "confidence", 0.0,
+            "reasoning", "LLM extraction failed"
+        ));
+    }
+
+    // ════════════════════════════════════════════
+    //  RESUME BULLET TAILORING (for extension sidebar)
+    // ════════════════════════════════════════════
+
+    /**
+     * Rewrites specific resume bullets to include keywords from the job description.
+     * If no targetBullets provided, extracts and rewrites the top 3 most relevant bullets.
+     *
+     * @param resumeText     Full parsed resume text
+     * @param jobDescription Job description to tailor toward
+     * @param targetBullets  Specific bullets to rewrite (empty = auto-select from resume)
+     * @return Map with key "tailoredBullets" containing rewritten bullet list
+     */
+    public Map<String, Object> tailorResumeBullets(String resumeText, String jobDescription, List<String> targetBullets) {
+        String bulletsContext = (targetBullets != null && !targetBullets.isEmpty())
+            ? "Rewrite ONLY these specific resume bullets:\n" + String.join("\n", targetBullets.stream().map(b -> "• " + b).toList())
+            : "Select and rewrite the 3 most relevant bullet points from the resume below.";
+
+        String systemPrompt = """
+            You are an expert resume writer who tailors resumes for specific job descriptions.
+
+            Rules:
+            - Use keywords from the job description naturally — do NOT keyword-stuff or make it awkward.
+            - Do NOT fabricate experience, tools, or achievements not implied by the original bullet.
+            - Keep each bullet to 1-2 lines, starting with a strong action verb.
+            - Maintain the same general meaning but improve keyword alignment with the JD.
+
+            Respond in EXACTLY this JSON format (no markdown, no code blocks):
+            {
+              "tailoredBullets": ["rewritten bullet 1", "rewritten bullet 2", "rewritten bullet 3"],
+              "keywordsAdded": ["keyword1", "keyword2"],
+              "tip": "One short tip for further improvement"
+            }
+            """;
+
+        String userPrompt = String.format(
+            "%s\n\nJOB DESCRIPTION:\n%s\n\nFULL RESUME:\n%s",
+            bulletsContext, jobDescription,
+            resumeText.length() > 3000 ? resumeText.substring(0, 3000) : resumeText
+        );
+
+        String response = callLlm(systemPrompt, userPrompt);
+        return parseJsonResponse(response, Map.of(
+            "tailoredBullets", List.of(),
+            "keywordsAdded", List.of(),
+            "tip", "Unable to tailor bullets at this time."
+        ));
+    }
+
+    // ════════════════════════════════════════════
     //  JSON RESPONSE PARSING HELPER
     // ════════════════════════════════════════════
 
