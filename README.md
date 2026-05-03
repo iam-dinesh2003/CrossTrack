@@ -74,27 +74,22 @@ Job searching in 2025+ is broken:
 
 ## Screenshots
 
-> **To add screenshots:** Take screenshots of your running app and save them to a `screenshots/` folder, then update the paths below.
+> Run the app locally, take screenshots, and drop them into the `screenshots/` folder — the paths are already wired up below.
 
-### Dashboard
-![Dashboard](screenshots/dashboard.png)
-*Real-time overview with stats, charts, recent applications, and platform breakdown*
+| Dashboard | Kanban Board |
+|-----------|-------------|
+| ![Dashboard](screenshots/dashboard.png) | ![Kanban](screenshots/kanban.png) |
+| Real-time stats, weekly trend chart, platform breakdown | Drag-and-drop pipeline across Applied → Interview → Offer → Rejected |
 
-### Kanban Board
-![Kanban](screenshots/kanban.png)
-*Drag-and-drop board to visually manage your application pipeline*
+| AI Career Coach | Analytics |
+|-----------------|-----------|
+| ![Coach](screenshots/coach.png) | ![Analytics](screenshots/analytics.png) |
+| Persistent-memory AI coach with full application context | Response rates, platform success, ghost job detection |
 
-### AI Career Coach
-![Coach](screenshots/coach.png)
-*AI-powered career coaching with persistent memory of your application history*
-
-### Analytics
-![Analytics](screenshots/analytics.png)
-*Response rates, application trends, platform comparisons, and success metrics*
-
-### Chrome Extension
-![Extension](screenshots/extension.png)
-*Auto-captures applications from LinkedIn, Indeed, and Handshake*
+| Chrome Extension |
+|-----------------|
+| ![Extension](screenshots/extension.png) |
+| Auto-captures applications from LinkedIn, Indeed & Handshake in under 2 seconds |
 
 ---
 
@@ -197,7 +192,7 @@ Ghost:       GET /api/ghost-jobs/summary
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/CrossTrack.git
+git clone https://github.com/iam-dinesh2003/CrossTrack.git
 cd CrossTrack
 ```
 
@@ -391,8 +386,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Dinesh Nannapaneni**
 
-- LinkedIn: [linkedin.com/in/dineshnannapaneni](https://linkedin.com/in/dineshnannapaneni)
-- GitHub: [github.com/dineshnannapaneni](https://github.com/dineshnannapaneni)
+- LinkedIn: [linkedin.com/in/dinesh-nannapaneni](https://linkedin.com/in/dinesh-nannapaneni)
+- GitHub: [github.com/iam-dinesh2003](https://github.com/iam-dinesh2003)
 - Email: dineshnannapaneni9@gmail.com
 
 ---

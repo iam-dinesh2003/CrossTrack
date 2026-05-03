@@ -8,7 +8,17 @@
     "https://*.linkedin.com/*",
     "https://*.indeed.com/*",
     "https://*.joinhandshake.com/*",
-    "https://crosstrack-production.up.railway.app/*"
+    "https://*.greenhouse.io/*",
+    "https://*.lever.co/*",
+    "https://*.myworkdayjobs.com/*",
+    "https://*.workday.com/*",
+    "https://*.icims.com/*",
+    "https://*.smartrecruiters.com/*",
+    "https://*.ashbyhq.com/*",
+    "https://*.jobvite.com/*",
+    "https://*.paylocity.com/*",
+    "https://*.bamboohr.com/*",
+    "http://localhost:8080/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -18,7 +28,17 @@
       "matches": [
         "https://*.linkedin.com/*",
         "https://*.indeed.com/*",
-        "https://*.joinhandshake.com/*"
+        "https://*.joinhandshake.com/*",
+        "https://*.greenhouse.io/*",
+        "https://*.lever.co/*",
+        "https://*.myworkdayjobs.com/*",
+        "https://*.workday.com/*",
+        "https://*.icims.com/*",
+        "https://*.smartrecruiters.com/*",
+        "https://*.ashbyhq.com/*",
+        "https://*.jobvite.com/*",
+        "https://*.paylocity.com/*",
+        "https://*.bamboohr.com/*"
       ],
       "js": ["injector.js"],
       "run_at": "document_start",
@@ -28,7 +48,17 @@
       "matches": [
         "https://*.linkedin.com/*",
         "https://*.indeed.com/*",
-        "https://*.joinhandshake.com/*"
+        "https://*.joinhandshake.com/*",
+        "https://*.greenhouse.io/*",
+        "https://*.lever.co/*",
+        "https://*.myworkdayjobs.com/*",
+        "https://*.workday.com/*",
+        "https://*.icims.com/*",
+        "https://*.smartrecruiters.com/*",
+        "https://*.ashbyhq.com/*",
+        "https://*.jobvite.com/*",
+        "https://*.paylocity.com/*",
+        "https://*.bamboohr.com/*"
       ],
       "js": ["content.js", "sidebar.js"],
       "css": ["styles.css", "sidebar.css"],

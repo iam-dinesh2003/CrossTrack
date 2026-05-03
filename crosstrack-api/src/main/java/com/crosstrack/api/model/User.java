@@ -47,6 +47,11 @@ public class User {
     @Column(name = "last_email_sync")
     private LocalDateTime lastEmailSync;
 
+    // Role: ROLE_USER | ROLE_ADMIN
+    @Column(nullable = false, columnDefinition = "VARCHAR(255) DEFAULT 'ROLE_USER'")
+    @Builder.Default
+    private String role = "ROLE_USER";
+
     // OTP for password reset
     @Column(name = "reset_otp")
     private String resetOtp;

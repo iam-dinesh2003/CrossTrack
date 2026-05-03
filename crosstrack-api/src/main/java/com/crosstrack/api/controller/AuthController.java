@@ -77,4 +77,18 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @PostMapping("/admin-verify-otp")
+    public ResponseEntity<?> adminVerifyOtp(@RequestBody Map<String, String> body) {
+        try {
+            String email = body.get("email");
+            String otp = body.get("otp");
+            if (email == null || otp == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Email and OTP are required"));
+            }
+            return ResponseEntity.ok(authService.verifyAdminOtp(email.trim().toLowerCase(), otp.trim()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(401).body(Map.of("error", e.getMessage()));
+        }
+    }
 }

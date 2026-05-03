@@ -35,13 +35,17 @@ public class OtpService {
      * Generate a 6-digit OTP, save it to the user, and send via email.
      */
     public Map<String, String> sendOtp(String email) {
-        if (fromEmail == null || fromEmail.isBlank()) {
-            log.error("[OTP] MAIL_USERNAME is not configured. Set MAIL_USERNAME and MAIL_PASSWORD environment variables.");
-            throw new RuntimeException("Email service is not configured. Please contact the administrator.");
-        }
-
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("No account found with this email"));
+
+        // If email not configured, fail loudly — never expose OTP in API response
+        if (fromEmail == null || fromEmail.isBlank()) {
+            log.warn("╔══════════════════════════════════════════════════════╗");
+            log.warn("║  [OTP] Email not configured — cannot send OTP        ║");
+            log.warn("║  Set MAIL_USERNAME and MAIL_PASSWORD in start-local  ║");
+            log.warn("╚══════════════════════════════════════════════════════╝");
+            throw new RuntimeException("Email service not configured. Please set MAIL_USERNAME and MAIL_PASSWORD.");
+        }
 
         // Generate 6-digit OTP
         String otp = String.format("%06d", RANDOM.nextInt(1000000));
@@ -72,6 +76,44 @@ public class OtpService {
         }
 
         return Map.of("message", "OTP sent to " + maskEmail(email));
+    }
+
+    /**
+     * Generate a 6-digit OTP for admin login 2FA and send via email.
+     */
+    public void sendAdminLoginOtp(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("No account found with this email"));
+
+        if (fromEmail == null || fromEmail.isBlank()) {
+            throw new RuntimeException("Email service not configured. Please set MAIL_USERNAME and MAIL_PASSWORD.");
+        }
+
+        String otp = String.format("%06d", RANDOM.nextInt(1000000));
+
+        user.setResetOtp(otp);
+        user.setOtpExpiry(LocalDateTime.now().plusMinutes(otpExpiryMinutes));
+        userRepository.save(user);
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(email);
+            message.setSubject("CrossTrack Admin — Login Verification");
+            message.setText(
+                    "Hi " + (user.getDisplayName() != null ? user.getDisplayName() : "Admin") + ",\n\n" +
+                    "Someone is attempting to log in to the CrossTrack admin panel.\n\n" +
+                    "Your verification code is: " + otp + "\n\n" +
+                    "This code expires in " + otpExpiryMinutes + " minutes.\n\n" +
+                    "If this wasn't you, your account may be compromised — change your password immediately.\n\n" +
+                    "— CrossTrack"
+            );
+            mailSender.send(message);
+            log.info("[ADMIN-OTP] Sent admin login OTP to {}", email);
+        } catch (Exception e) {
+            log.error("[ADMIN-OTP] Failed to send admin login OTP to {}: {}", email, e.getMessage());
+            throw new RuntimeException("Failed to send verification email. Please try again.");
+        }
     }
 
     /**

@@ -1,6 +1,9 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, Briefcase, BarChart3, Ghost, Settings, LogOut, Search, ChevronDown, ChevronRight, Sparkles, Brain, Bell, Target, GraduationCap, FileText } from 'lucide-react';
+import {
+  LayoutDashboard, Briefcase, BarChart3, Ghost, Settings, LogOut,
+  Search, ChevronDown, Sparkles, Brain, FileText, ShieldCheck, X,
+} from 'lucide-react';
 import { useState } from 'react';
 import clsx from 'clsx';
 
@@ -9,30 +12,31 @@ const mainNav = [
 ];
 
 const appSubNav = [
-  { to: '/applications', label: 'All Applications' },
-  { to: '/applications/kanban', label: 'Kanban Board' },
+  { to: '/applications',        label: 'All Applications' },
+  { to: '/applications/kanban', label: 'Kanban Board'     },
 ];
 
 const aiSubNav = [
-  { to: '/coach', label: 'Career Coach' },
-  { to: '/ai/match-score', label: 'Match Score' },
-  { to: '/ai/interview-prep', label: 'Interview Prep' },
-  { to: '/ai/mock-interview', label: 'Mock Interview' },
-  { to: '/ai/interview-notes', label: 'Interview Notes' },
-  { to: '/follow-ups', label: 'Follow-Ups' },
-  { to: '/resumes', label: 'Resumes' },
+  { to: '/job-discovery',      label: '🔍 Job Discovery' },
+  { to: '/coach',              label: 'Career Coach'     },
+  { to: '/ai/match-score',     label: 'Match Score'      },
+  { to: '/ai/interview-prep',  label: 'Interview Prep'   },
+  { to: '/ai/mock-interview',  label: 'Mock Interview'   },
+  { to: '/ai/interview-notes', label: 'Interview Notes'  },
+  { to: '/follow-ups',         label: 'Follow-Ups'       },
+  { to: '/resumes',            label: 'Resumes'          },
 ];
 
 const otherNav = [
-  { to: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { to: '/ghost-jobs', icon: Ghost, label: 'Ghost Jobs' },
+  { to: '/analytics',  icon: BarChart3, label: 'Analytics'  },
+  { to: '/ghost-jobs', icon: Ghost,     label: 'Ghost Jobs' },
 ];
 
-export default function Sidebar() {
-  const { logout } = useAuth();
+export default function Sidebar({ open, onClose }) {
+  const { logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [appsOpen, setAppsOpen] = useState(true);
-  const [aiOpen, setAiOpen] = useState(true);
+  const [aiOpen,   setAiOpen]   = useState(true);
 
   const linkClass = ({ isActive }) => clsx(
     'flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] font-medium transition-all mx-3 my-0.5 btn-press',
@@ -48,10 +52,16 @@ export default function Sidebar() {
       : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.03]'
   );
 
+  const handleNavClick = () => { if (onClose) onClose(); };
+
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-[260px] bg-navy-700 flex flex-col z-40 border-r border-white/[0.06]">
+    <aside className={clsx(
+      'fixed left-0 top-0 bottom-0 w-[260px] bg-navy-700 flex flex-col z-40 border-r border-white/[0.06] transition-transform duration-300',
+      'md:translate-x-0',
+      open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+    )}>
       {/* Logo */}
-      <div className="px-6 py-6">
+      <div className="px-6 py-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="absolute inset-0 bg-indigo-500/20 rounded-xl blur-lg" />
@@ -64,6 +74,10 @@ export default function Sidebar() {
             <p className="text-[10px] text-indigo-400/60 font-medium tracking-wide">AI Career Platform</p>
           </div>
         </div>
+        {/* close button — mobile only */}
+        <button onClick={onClose} className="md:hidden text-slate-400 hover:text-white transition p-1">
+          <X size={18} />
+        </button>
       </div>
 
       <div className="sidebar-divider mx-4" />
@@ -83,15 +97,15 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-1 relative">
+      <nav className="flex-1 overflow-y-auto px-1 relative" onClick={handleNavClick}>
         {mainNav.map(item => (
           <NavLink key={item.to} to={item.to} className={linkClass}>
             <item.icon size={18} strokeWidth={1.8} /> {item.label}
           </NavLink>
         ))}
 
-        {/* Applications (expandable) */}
-        <button onClick={() => setAppsOpen(!appsOpen)}
+        {/* Applications */}
+        <button onClick={e => { e.stopPropagation(); setAppsOpen(!appsOpen); }}
           className="flex items-center gap-3 px-4 py-2.5 mx-3 rounded-xl text-[13px] font-medium text-slate-400 hover:text-white sidebar-link-glow w-[calc(100%-24px)] transition-all my-0.5 btn-press">
           <Briefcase size={18} strokeWidth={1.8} /> <span className="flex-1 text-left">Applications</span>
           <div className={clsx('transition-transform duration-200', appsOpen ? 'rotate-0' : '-rotate-90')}>
@@ -111,8 +125,8 @@ export default function Sidebar() {
           ))}
         </div>
 
-        {/* AI Tools (expandable) */}
-        <button onClick={() => setAiOpen(!aiOpen)}
+        {/* AI Tools */}
+        <button onClick={e => { e.stopPropagation(); setAiOpen(!aiOpen); }}
           className="flex items-center gap-3 px-4 py-2.5 mx-3 rounded-xl text-[13px] font-medium text-slate-400 hover:text-white sidebar-link-glow w-[calc(100%-24px)] transition-all my-0.5 btn-press">
           <Brain size={18} strokeWidth={1.8} /> <span className="flex-1 text-left">AI Tools</span>
           <span className="text-[8px] bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-2 py-0.5 rounded-full font-bold tracking-wider mr-1 shadow-sm shadow-indigo-500/30">NEW</span>
@@ -141,14 +155,33 @@ export default function Sidebar() {
           </NavLink>
         ))}
 
-        {/* Bottom fade overlay */}
         <div className="sticky bottom-0 h-8 bg-gradient-to-t from-navy-700 to-transparent pointer-events-none" />
       </nav>
 
       {/* Bottom */}
       <div className="sidebar-divider mx-4" />
       <div className="p-3 space-y-1">
-        <NavLink to="/settings" className={linkClass}><Settings size={18} strokeWidth={1.8} /> Settings</NavLink>
+        {isAdmin && (
+          <>
+            <div className="flex items-center gap-2 px-6 mb-1 mt-1">
+              <p className="text-[10px] font-semibold text-amber-600/70 uppercase tracking-[0.15em]">Admin</p>
+              <div className="flex-1 h-px bg-gradient-to-r from-amber-700/30 to-transparent" />
+            </div>
+            <NavLink to="/admin"
+              onClick={handleNavClick}
+              className={({ isActive }) => clsx(
+                'flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] font-medium transition-all mx-3 my-0.5 btn-press',
+                isActive
+                  ? 'bg-gradient-to-r from-amber-500/15 to-orange-500/10 text-amber-300 shadow-lg shadow-amber-500/5'
+                  : 'text-amber-500/70 hover:text-amber-300 hover:bg-amber-500/[0.08]'
+              )}>
+              <ShieldCheck size={18} strokeWidth={1.8} /> Admin Panel
+            </NavLink>
+          </>
+        )}
+        <NavLink to="/settings" className={linkClass} onClick={handleNavClick}>
+          <Settings size={18} strokeWidth={1.8} /> Settings
+        </NavLink>
         <button onClick={() => { logout(); navigate('/login'); }}
           className="flex items-center gap-3 px-4 py-2.5 mx-3 rounded-xl text-[13px] font-medium text-rose-400/60 hover:text-rose-300 hover:bg-rose-500/[0.08] w-[calc(100%-24px)] transition-all btn-press">
           <LogOut size={18} strokeWidth={1.8} /> Log Out

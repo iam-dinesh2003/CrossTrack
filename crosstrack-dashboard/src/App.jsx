@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import AdminRoute from './components/auth/AdminRoute';
 import LoginPage from './components/auth/LoginPage';
 import RegisterPage from './components/auth/RegisterPage';
 import ForgotPasswordPage from './components/auth/ForgotPasswordPage';
@@ -21,7 +22,12 @@ import InterviewPrepPage from './components/ai/InterviewPrepPage';
 import MockInterviewPage from './components/ai/MockInterviewPage';
 import InterviewNotesPage from './components/ai/InterviewNotesPage';
 import ResumesPage from './components/resumes/ResumesPage';
+import JobDiscoveryPage from './components/jobs/JobDiscoveryPage';
 import PrivacyPolicy from './components/PrivacyPolicy';
+import AdminLayout from './components/admin/AdminLayout';
+import AdminDashboardPage from './components/admin/AdminDashboardPage';
+import AdminUsersPage from './components/admin/AdminUsersPage';
+import AdminUserDetailPage from './components/admin/AdminUserDetailPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,6 +64,16 @@ export default function App() {
                 <Route path="/ai/mock-interview" element={<MockInterviewPage />} />
                 <Route path="/ai/interview-notes" element={<InterviewNotesPage />} />
                 <Route path="/resumes" element={<ResumesPage />} />
+                <Route path="/job-discovery" element={<JobDiscoveryPage />} />
+              </Route>
+            </Route>
+
+            {/* Admin Routes — completely separate layout, admin-only */}
+            <Route element={<AdminRoute />}>
+              <Route element={<AdminLayout />}>
+                <Route path="/admin" element={<AdminDashboardPage />} />
+                <Route path="/admin/users" element={<AdminUsersPage />} />
+                <Route path="/admin/users/:id" element={<AdminUserDetailPage />} />
               </Route>
             </Route>
 

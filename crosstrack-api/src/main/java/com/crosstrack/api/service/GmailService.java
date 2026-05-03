@@ -326,10 +326,12 @@ public class GmailService {
                     continue;
                 }
 
-                // ── Layer 7: LLM fallback — only when ALL rule-based layers failed ──
+                // ── Layer 7: LLM fallback — when company OR role is still missing ──
                 String llmCompany = null;
                 String llmRole = null;
-                if (result.getCompany() == null && result.getRole() == null) {
+                boolean needsLlm = (result.getCompany() == null && result.getRole() == null)
+                    || result.getRole() == null;   // also run when role is missing but company was found
+                if (needsLlm) {
                     if (rateLimitService.allowRequest(user.getId(), RateLimitService.Category.EMAIL_PARSE)) {
                         log.info("[Gmail] Attempting LLM fallback extraction for: {}", subject);
                         Map<String, Object> llmResult = aiService.extractJobDetailsFromEmail(body, subject, from);
@@ -346,7 +348,10 @@ public class GmailService {
                         log.info("[Gmail] EMAIL_PARSE rate limit reached, skipping LLM fallback for: {}", subject);
                     }
 
-                    if (llmCompany == null && llmRole == null) {
+                    // Only skip email entirely if we have neither company nor role from any source
+                    boolean hasCompany = result.getCompany() != null || llmCompany != null;
+                    boolean hasRole = result.getRole() != null || llmRole != null;
+                    if (!hasCompany && !hasRole) {
                         log.info("[Gmail] SKIP (no company or role after all layers): {}", subject);
                         continue;
                     }
@@ -390,6 +395,22 @@ public class GmailService {
 
                 if (existing.isPresent()) {
                     Application app = existing.get();
+                    boolean changed = false;
+
+                    // Upgrade "Unknown Role" → real role if we extracted one this time
+                    if ("Unknown Role".equalsIgnoreCase(app.getRole()) && !"Unknown Role".equalsIgnoreCase(role)) {
+                        log.info("[Gmail] Upgrading role: '{}' → '{}' for {}", app.getRole(), role, company);
+                        app.setRole(role);
+                        changed = true;
+                    }
+                    // Upgrade generic company names (all-lowercase, short slugs) → proper names from LLM
+                    if (llmCompany != null && !llmCompany.equalsIgnoreCase(app.getCompany())
+                            && app.getCompany().equals(app.getCompany().toLowerCase())) {
+                        log.info("[Gmail] Upgrading company: '{}' → '{}'", app.getCompany(), llmCompany);
+                        app.setCompany(llmCompany);
+                        changed = true;
+                    }
+
                     if (shouldUpdateStatus(app.getStatus(), status)) {
                         String oldStatus = app.getStatus();
                         app.setStatus(status);
@@ -405,9 +426,12 @@ public class GmailService {
                         }
                         if (app.getNotes() == null) app.setNotes("");
                         app.setNotes(app.getNotes() + "\n[Email:" + account.getGmailEmail() + "] Status: " + oldStatus + " → " + status + " (from: " + subject + ")");
+                        changed = true;
+                        log.info("[Gmail] Updated {} - {} from {} to {}", company, role, oldStatus, status);
+                    }
+                    if (changed) {
                         applicationRepository.save(app);
                         updated++;
-                        log.info("[Gmail] Updated {} - {} from {} to {}", company, role, oldStatus, status);
                     }
                 } else {
                     Application app = Application.builder()
@@ -766,7 +790,7 @@ public class GmailService {
         query.append("OR from:icims.com OR from:smartrecruiters.com OR from:ashbyhq.com ");
         query.append("OR from:joinhandshake.com OR from:jobvite.com OR from:myworkdayjobs.com ");
         query.append("OR from:taleo.net OR from:successfactors.com OR from:brassring.com ");
-        query.append("OR from:bamboohr.com OR from:rippling.com ");
+        query.append("OR from:bamboohr.com OR from:rippling.com OR from:paylocity.com OR from:ultipro.com OR from:ceridian.com ");
         // LinkedIn (multiple sender addresses)
         query.append("OR from:jobs-noreply@linkedin.com ");
         query.append("OR from:noreply@linkedin.com ");

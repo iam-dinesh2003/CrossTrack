@@ -16,4 +16,8 @@ public interface CoachMessageRepository extends JpaRepository<CoachMessage, Long
     @Transactional
     @Query("DELETE FROM CoachMessage m WHERE m.user.id = :userId")
     void deleteByUserId(@Param("userId") Long userId);
+
+    // Admin stats: count distinct users who have used the AI coach
+    @Query("SELECT COUNT(DISTINCT m.user.id) FROM CoachMessage m WHERE m.role = 'USER'")
+    long countDistinctUsers();
 }

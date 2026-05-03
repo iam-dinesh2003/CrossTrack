@@ -499,6 +499,12 @@ public class EmailClassifier {
         Pattern.compile("interest\\s+in\\s+(?:the\\s+)?(.+?)\\s+(?:position|role|opening)", Pattern.CASE_INSENSITIVE),
         // "application for the Software Engineer role/position/opening"
         Pattern.compile("application\\s+for\\s+(?:the\\s+)?(.+?)\\s+(?:role|position|opening)", Pattern.CASE_INSENSITIVE),
+        // "application for Software Engineer." — plain role ending with punctuation (e.g. Paylocity emails)
+        Pattern.compile("application\\s+for\\s+(?:the\\s+)?([A-Z][\\w\\s,/&-]{2,60}?)\\s*[.!,\\n]", Pattern.CASE_INSENSITIVE),
+        // "received your application for Software Engineer"
+        Pattern.compile("received\\s+your\\s+application\\s+for\\s+(?:the\\s+)?(.+?)[\\.!,\\n]", Pattern.CASE_INSENSITIVE),
+        // "your application for Software Engineer" (body variant)
+        Pattern.compile("your\\s+application\\s+for\\s+(?:the\\s+)?(.+?)[\\.!,\\n]", Pattern.CASE_INSENSITIVE),
         // "regarding the Software Engineer opportunity/position/role"
         Pattern.compile("regarding\\s+(?:the\\s+)?(.+?)\\s+(?:opportunity|position|role|opening)", Pattern.CASE_INSENSITIVE),
         // "reviewed your application/resume for Software Engineer"
@@ -508,7 +514,9 @@ public class EmailClassifier {
         // "applied for the Software Engineer" (role only)
         Pattern.compile("applied\\s+for\\s+(?:the\\s+)?(.+?)[\\.\\,,\\s]", Pattern.CASE_INSENSITIVE),
         // "you applied to Software Engineer" (role only, no company after)
-        Pattern.compile("you\\s+applied\\s+(?:to|for)\\s+(.+?)[\\.\\,,\\s]", Pattern.CASE_INSENSITIVE)
+        Pattern.compile("you\\s+applied\\s+(?:to|for)\\s+(.+?)[\\.\\,,\\s]", Pattern.CASE_INSENSITIVE),
+        // "interest in a career at X. We have received your application for Role"
+        Pattern.compile("interest\\s+in\\s+a\\s+career\\s+at\\s+.+?[.\\n]\\s*(?:Dear\\s+\\w+,\\s*)?(?:Thank\\s+you.+?)?(?:We\\s+have\\s+)?received\\s+your\\s+application\\s+for\\s+(.+?)[\\.!,]", Pattern.CASE_INSENSITIVE | Pattern.DOTALL)
     );
 
     // ── Subject Anchor Patterns — high-precision subject-line-only role extraction ──

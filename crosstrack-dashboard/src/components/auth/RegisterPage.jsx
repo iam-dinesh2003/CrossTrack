@@ -109,7 +109,17 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 mt-8">
+        {/* Gmail sync notice */}
+        <div className="mt-5 flex items-start gap-2.5 px-4 py-3 bg-amber-50 border border-amber-200/80 rounded-xl">
+          <span className="text-amber-500 text-[15px] flex-shrink-0 mt-0.5">⚠️</span>
+          <p className="text-[12px] text-amber-700 leading-relaxed">
+            <span className="font-semibold">Gmail sync requires access approval.</span> After signing up, go to{' '}
+            <span className="font-medium">Settings → Gmail Sync</span> and click{' '}
+            <span className="font-medium">"Request Gmail Access"</span> — you'll be added within 24 hours.
+          </p>
+        </div>
+
+        <p className="text-center text-sm text-gray-500 mt-5">
           Already have an account?{' '}
           <Link to="/login" className="text-indigo-600 font-semibold hover:text-indigo-700 transition">Sign In</Link>
         </p>

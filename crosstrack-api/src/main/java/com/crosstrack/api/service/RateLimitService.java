@@ -90,6 +90,15 @@ public class RateLimitService {
         return counters.getOrDefault(key, 0);
     }
 
+    /**
+     * Admin operation: clear all today's counters for a specific user so they can use AI again.
+     */
+    public void resetLimitsForUser(Long userId) {
+        String userPrefix = userId + ":";
+        counters.keySet().removeIf(k -> k.startsWith(userPrefix));
+        log.info("[RateLimit] All limits reset for user {}", userId);
+    }
+
     private int getLimit(Category category) {
         return switch (category) {
             case CHAT -> dailyChatLimit;

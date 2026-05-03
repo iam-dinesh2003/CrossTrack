@@ -55,7 +55,7 @@ public class GmailController {
      */
     @GetMapping("/callback")
     public ResponseEntity<String> handleCallback(@RequestParam("code") String code) {
-        String redirectUrl = "http://localhost:5173/gmail-callback?code=" + code;
+        String redirectUrl = "http://localhost:5174/gmail-callback?code=" + code;
         String html = """
             <!DOCTYPE html>
             <html>

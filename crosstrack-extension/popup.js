@@ -2,7 +2,7 @@
 // CrossTrack — Popup Script
 // ══════════════════════════════════════════════════
 
-const API_BASE = "https://crosstrack-production.up.railway.app/api";
+const API_BASE = "http://localhost:8080/api";
 
 const PLATFORM_COLORS = {
   linkedin: "#0A66C2",
@@ -37,11 +37,80 @@ function setupEventListeners() {
 
   // Dashboard button
   document.getElementById("dashboardBtn").addEventListener("click", () => {
-    chrome.tabs.create({ url: "https://cross-track-five.vercel.app" });
+    chrome.tabs.create({ url: "http://localhost:5173" });
   });
 
   // Refresh
   document.getElementById("refreshBtn").addEventListener("click", loadApplications);
+
+  // Open Sidebar on current tab — uses scripting API (no message race condition)
+  document.getElementById("openSidebarBtn").addEventListener("click", async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab) { window.close(); return; }
+
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        world: "ISOLATED",
+        func: () => {
+          if (!window.CrossTrackSidebar) return;
+
+          // Try to find job data already detected by content.js
+          let jobData = window.__ctLastJob || null;
+
+          // If not cached, extract from page DOM right now
+          if (!jobData) {
+            const h1s = document.querySelectorAll("h1");
+            let role = null;
+            for (const h1 of h1s) {
+              const t = h1.textContent.trim();
+              if (t && t.length > 2 && t.length < 200 &&
+                  !["Jobs", "LinkedIn", "Home"].includes(t)) {
+                role = t; break;
+              }
+            }
+            let company = null;
+            const cLinks = document.querySelectorAll('a[href*="/company/"]');
+            for (const l of cLinks) {
+              const t = l.textContent.trim().split("\n")[0].trim();
+              if (t && t.length > 0 && t.length < 80) { company = t; break; }
+            }
+            if (role || company) {
+              const host = window.location.hostname;
+              jobData = {
+                jobId: "popup_" + Date.now(),
+                role: role || "Unknown Role",
+                company: company || "Unknown Company",
+                platform: host.includes("linkedin") ? "linkedin"
+                        : host.includes("indeed") ? "indeed"
+                        : host.includes("handshake") ? "handshake" : "other",
+                url: window.location.href,
+                appliedAt: new Date().toISOString(),
+                status: "applied",
+              };
+            }
+          }
+
+          if (jobData) {
+            window.CrossTrackSidebar.show(jobData);
+          }
+        },
+      });
+    } catch (e) {
+      // Tab is not a supported job page
+      const btn = document.getElementById("openSidebarBtn");
+      if (btn) {
+        btn.textContent = "⚠ Not a job page";
+        btn.style.color = "#e17055";
+        setTimeout(() => {
+          btn.innerHTML = "&#128269; Sidebar";
+          btn.style.color = "";
+        }, 2500);
+      }
+      return; // Don't close popup so user sees the error
+    }
+    window.close();
+  });
 
   // Quick Add toggle
   document.getElementById("quickAddToggle").addEventListener("click", () => {
@@ -266,12 +335,48 @@ async function checkApiStatus() {
 
 function loadApplications() {
   chrome.runtime.sendMessage({ type: "GET_APPLICATIONS" }, (response) => {
-    if (response && response.applications) {
+    if (!response) return;
+
+    // Session expired or not logged in — clear stale list, show login form
+    if (response.error === "session_expired" || response.error === "not_logged_in") {
+      allApplications = [];
+      updateStats();
+      renderApplications();
+      // Refresh the API status section so login form appears
+      checkApiStatus();
+      showOfflineBar("Session expired — please log in again to sync your jobs.", "#e17055");
+      return;
+    }
+
+    // Backend offline — still show cached data but with a notice
+    if (response.error === "offline") {
+      showOfflineBar("⚠ Backend offline — showing cached data. Start the server to sync.", "#fdcb6e");
+    } else {
+      // Clear any previous offline bar on success
+      const bar = document.getElementById("ct-offline-bar");
+      if (bar) bar.remove();
+    }
+
+    if (response.applications) {
       allApplications = response.applications;
       updateStats();
       renderApplications();
     }
   });
+}
+
+function showOfflineBar(message, color) {
+  let bar = document.getElementById("ct-offline-bar");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "ct-offline-bar";
+    bar.style.cssText = `padding:6px 12px;font-size:11px;color:#fff;text-align:center;
+      background:${color};border-radius:4px;margin:4px 8px;`;
+    const appList = document.getElementById("appList");
+    if (appList && appList.parentNode) appList.parentNode.insertBefore(bar, appList);
+  }
+  bar.style.background = color;
+  bar.textContent = message;
 }
 
 // ─── Stats ───
@@ -315,7 +420,11 @@ function renderApplications() {
 
   if (empty) empty.style.display = "none";
 
-  list.innerHTML = filtered
+  // Show only the 3 most recent applications
+  const recent = filtered.slice(0, 3);
+  const hiddenCount = filtered.length - recent.length;
+
+  list.innerHTML = recent
     .map(
       (app) => `
     <div class="app-item" data-jobid="${app.jobId}">
@@ -339,6 +448,19 @@ function renderApplications() {
   `
     )
     .join("");
+
+  if (hiddenCount > 0) {
+    list.innerHTML += `
+      <div style="text-align:center;padding:8px 0 4px;">
+        <a href="#" id="viewAllLink" style="font-size:11px;color:#6C5CE7;font-weight:600;text-decoration:none;">
+          +${hiddenCount} more — Open Dashboard
+        </a>
+      </div>`;
+    document.getElementById("viewAllLink").addEventListener("click", (e) => {
+      e.preventDefault();
+      chrome.tabs.create({ url: "http://localhost:5173" });
+    });
+  }
 
   // Status change handlers
   list.querySelectorAll(".status-select").forEach((select) => {

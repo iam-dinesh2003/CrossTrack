@@ -230,38 +230,69 @@ export default function SettingsPage() {
               )}
             </div>
 
-            {/* Google Verification Warning */}
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex gap-3">
-              <AlertTriangle size={20} className="text-amber-500 shrink-0 mt-0.5" />
-              <div className="space-y-2">
-                <p className="text-sm font-semibold text-amber-800">
-                  Action required before connecting Gmail
-                </p>
-                <p className="text-sm text-amber-700">
-                  Cross Track is pending Google's OAuth verification. Until then, only approved test users can connect Gmail. If you try to connect and see an <span className="font-semibold">"Access blocked"</span> error, follow these steps:
-                </p>
-                <ol className="text-sm text-amber-700 space-y-1 list-decimal list-inside">
-                  <li>Click the button below to send an access request to the developer</li>
-                  <li>You'll be added as a test user within 24 hours</li>
-                  <li>Once added, come back here and click "Connect Gmail Account" — it will work</li>
-                </ol>
-                <button
-                  onClick={() => requestAccessMutation.mutate()}
-                  disabled={requestAccessMutation.isPending || requestAccessMutation.isSuccess}
-                  className="mt-2 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {requestAccessMutation.isPending ? (
-                    <><Loader2 size={14} className="animate-spin" /> Sending...</>
-                  ) : requestAccessMutation.isSuccess ? (
-                    <><Check size={14} /> Request sent! You'll be added within 24 hours</>
-                  ) : (
-                    'Request Access'
-                  )}
-                </button>
-                <p className="text-xs text-amber-600 mt-1">
-                  This is a one-time step. Google requires all apps using Gmail to go through a verification process, which is in progress.
-                </p>
+            {/* Gmail Onboarding Guide */}
+            <div className="rounded-2xl border border-indigo-100/80 bg-gradient-to-br from-indigo-50/80 to-violet-50/30 p-5 space-y-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center flex-shrink-0">
+                  <Mail size={16} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-indigo-900">How to connect Gmail to CrossTrack</p>
+                  <p className="text-xs text-indigo-600/70 mt-0.5">
+                    CrossTrack is pending Google verification — follow these 3 steps to get access
+                  </p>
+                </div>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {[
+                  { n: '1', title: 'Request Access', desc: 'Click the button below — the developer adds you as a test user within 24 hours.' },
+                  { n: '2', title: 'Wait for Confirmation', desc: "You'll get an email once you're added. This is a one-time step." },
+                  { n: '3', title: 'Connect Gmail', desc: 'Come back here, click "Connect Gmail Account", and sign in normally.' },
+                ].map(s => (
+                  <div key={s.n} className="flex gap-3 p-3.5 bg-white/60 rounded-xl border border-indigo-100/60">
+                    <div className="w-6 h-6 rounded-full bg-indigo-500 text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                      {s.n}
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-indigo-900">{s.title}</p>
+                      <p className="text-xs text-indigo-600/80 mt-0.5 leading-relaxed">{s.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <a
+                href="https://www.youtube.com/watch?v=Sxu-4VULQ10"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2.5 px-4 py-2.5 bg-white/70 border border-indigo-100/80 rounded-xl hover:bg-white hover:border-indigo-200 transition group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-rose-500 flex items-center justify-center flex-shrink-0">
+                  <svg viewBox="0 0 24 24" fill="white" className="w-4 h-4"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-gray-800 group-hover:text-indigo-700 transition">Watch: How to bypass the Google warning (1 min)</p>
+                  <p className="text-[11px] text-gray-500">Click Advanced → proceed past the "app isn't verified" screen</p>
+                </div>
+              </a>
+
+              <button
+                onClick={() => requestAccessMutation.mutate()}
+                disabled={requestAccessMutation.isPending || requestAccessMutation.isSuccess}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-indigo-500 to-violet-500 text-white hover:shadow-lg hover:shadow-indigo-200/50 transition disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {requestAccessMutation.isPending ? (
+                  <><Loader2 size={14} className="animate-spin" /> Sending request...</>
+                ) : requestAccessMutation.isSuccess ? (
+                  <><Check size={14} /> Request sent! You'll be added within 24 hours</>
+                ) : (
+                  'Request Gmail Access (Step 1)'
+                )}
+              </button>
+              <p className="text-[11px] text-indigo-500/70 text-center">
+                This sends an email to the developer — you only need to do this once.
+              </p>
             </div>
 
             {/* Connected Accounts List */}

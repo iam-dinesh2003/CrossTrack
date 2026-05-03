@@ -348,12 +348,89 @@
     return null;
   }
 
+  function extractAtsJob() {
+    // Generic ATS extractor for Greenhouse, Lever, Workday, iCIMS, etc.
+    const host = window.location.hostname;
+    const h1 = document.querySelector("h1");
+    const role = h1 ? h1.textContent.trim() : null;
+    if (!role || role.length < 2 || role.length > 150) return null;
+
+    let company = null;
+
+    // Greenhouse: company in <meta name="description"> or og:site_name
+    if (host.includes("greenhouse.io")) {
+      const og = document.querySelector('meta[property="og:site_name"]');
+      if (og) company = og.getAttribute("content");
+      if (!company) {
+        const match = window.location.hostname.match(/boards\.greenhouse\.io/);
+        if (match) {
+          const pathParts = window.location.pathname.split("/");
+          company = pathParts[1] ? decodeURIComponent(pathParts[1]).replace(/-/g, " ") : null;
+        }
+      }
+    }
+    // Lever: company name from <meta> or subdomain
+    else if (host.includes("lever.co")) {
+      const og = document.querySelector('meta[property="og:site_name"]');
+      if (og) company = og.getAttribute("content");
+      if (!company) {
+        const sub = host.split(".")[0]; // jobs.lever.co or companyname.lever.co
+        if (sub !== "jobs") company = sub.replace(/-/g, " ");
+      }
+    }
+    // Workday: company from page title or meta
+    else if (host.includes("workday.com") || host.includes("myworkdayjobs.com")) {
+      const og = document.querySelector('meta[property="og:site_name"]') ||
+                 document.querySelector('meta[name="application-name"]');
+      if (og) company = og.getAttribute("content");
+      if (!company) {
+        const sub = host.split(".")[0];
+        company = sub.replace(/-/g, " ");
+      }
+    }
+    // iCIMS, SmartRecruiters, Jobvite, Paylocity, BambooHR — use og:site_name or subdomain
+    else {
+      const og = document.querySelector('meta[property="og:site_name"]') ||
+                 document.querySelector('meta[name="author"]');
+      if (og) company = og.getAttribute("content");
+      if (!company) {
+        // Try subdomain: company.bamboohr.com, company.jobvite.com, etc.
+        const sub = host.split(".")[0];
+        if (sub && sub !== "www" && sub !== "jobs" && sub !== "careers") {
+          company = sub.replace(/-/g, " ");
+        }
+      }
+    }
+
+    // Fallback: extract company from page title  "Role | Company" or "Role - Company"
+    if (!company) {
+      const titleMatch = document.title.match(/(?:\||-|–|—)\s*(.+?)(?:\s*[\|–—]|$)/);
+      if (titleMatch) company = titleMatch[1].trim();
+    }
+
+    if (role && company) {
+      return { role, company, platform: "company_site" };
+    }
+    // Return role only if we have it — company can be "Unknown" rather than losing the job
+    if (role) {
+      return { role, company: company || "Unknown Company", platform: "company_site" };
+    }
+    return null;
+  }
+
   function extractCurrentJob() {
     const host = window.location.hostname;
     let job = null;
     if (host.includes("linkedin.com")) job = extractLinkedInJob();
     else if (host.includes("indeed.com")) job = extractIndeedJob();
     else if (host.includes("handshake.com") || host.includes("joinhandshake.com")) job = extractHandshakeJob();
+    else if (
+      host.includes("greenhouse.io") || host.includes("lever.co") ||
+      host.includes("workday.com") || host.includes("myworkdayjobs.com") ||
+      host.includes("icims.com") || host.includes("smartrecruiters.com") ||
+      host.includes("ashbyhq.com") || host.includes("jobvite.com") ||
+      host.includes("paylocity.com") || host.includes("bamboohr.com")
+    ) job = extractAtsJob();
     if (!job) job = extractFromPageTitle();
     return job;
   }
@@ -384,6 +461,9 @@
       };
       log("Job detected:", job.company, "—", job.role);
 
+      // Expose on window so popup's scripting.executeScript can read it
+      window.__ctLastJob = lastDetectedJob;
+
       // Show ATS sidebar when a new job is detected
       if (window.CrossTrackSidebar) {
         window.CrossTrackSidebar.show(lastDetectedJob);
@@ -398,6 +478,11 @@
   setInterval(() => {
     if (window.location.href !== lastUrl) {
       lastUrl = window.location.href;
+      // Reset dual-click state when user navigates to a new page
+      applyButtonClicked = false;
+      submitButtonClicked = false;
+      savedThisSession = false;
+      clearTimeout(autoSaveTimer);
       setTimeout(checkForNewJob, 800);
     }
   }, 500);
@@ -449,19 +534,56 @@
   let applyFlowActive = false;
   let applyFlowTimeout = null;
 
+  // Dual-click tracking — if user clicks both Apply AND Submit, save unconditionally
+  let applyButtonClicked = false;   // set when any Apply/Easy Apply button is clicked
+  let submitButtonClicked = false;  // set when any Submit button is clicked
+  let savedThisSession = false;     // prevents double-save within same apply session
+  let autoSaveTimer = null;         // 2-minute fallback timer handle
+
   function startApplyFlow() {
     applyFlowActive = true;
     clearTimeout(applyFlowTimeout);
     applyFlowTimeout = setTimeout(() => {
       applyFlowActive = false;
-      log("Apply flow expired (30s timeout)");
-    }, 30000);
+      log("Apply flow expired (30 min timeout)");
+    }, 1800000); // 30 minutes — ATS forms take 10–25 min to fill
     log("Apply flow STARTED — now watching for confirmation");
   }
 
   function endApplyFlow() {
     applyFlowActive = false;
     clearTimeout(applyFlowTimeout);
+  }
+
+  // Schedules a 2-minute backup save in case DOM confirmation never fires
+  function scheduleAutoSave() {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(() => {
+      if (savedThisSession) return; // already saved via another trigger
+      log("AUTO-SAVE: 2 min elapsed after Submit — no confirmation detected, forcing save");
+      let job = lastDetectedJob;
+      if (!job) {
+        const extracted = extractCurrentJob();
+        if (extracted) {
+          job = {
+            jobId: generateJobId(extracted.company, extracted.role),
+            company: extracted.company,
+            role: extracted.role,
+            platform: extracted.platform || detectPlatform(),
+            url: window.location.href,
+            location: extracted.location || "",
+            appliedAt: new Date().toISOString(),
+            status: "applied",
+          };
+          lastDetectedJob = job;
+        }
+      }
+      if (job) {
+        triggerSave("auto-save-2min");
+      } else {
+        log("AUTO-SAVE: no job data available, skipping");
+      }
+    }, 2 * 60 * 1000); // 2 minutes
   }
 
   // ══════════════════════════════════════════════════
@@ -471,7 +593,7 @@
   function triggerSave(source) {
     // PerformanceObserver is a strong signal (actual network request to apply endpoint)
     // so it bypasses the applyFlowActive gate
-    const isStrongSignal = (source === "performanceobserver" || source === "submit-button-click");
+    const isStrongSignal = (source === "performanceobserver" || source === "submit-button-click" || source === "auto-save-2min");
 
     if (!applyFlowActive && !isStrongSignal) {
       log("triggerSave BLOCKED — apply flow not active (source:", source + ")");
@@ -500,6 +622,8 @@
 
     if (jobData) {
       log("Saving:", jobData.company, "—", jobData.role, "(from " + source + ")");
+      savedThisSession = true;     // mark as saved — blocks auto-save-2min
+      clearTimeout(autoSaveTimer); // cancel the backup timer
       saveApplication(jobData);
       // End the apply flow after a successful save trigger
       // (prevents double-saves from backup triggers)
@@ -556,10 +680,20 @@
         text === "apply" ||
         text === "apply now" ||
         text === "apply for free" ||
-        text === "apply on company site"
+        text === "apply on company site" ||
+        text === "apply for this job" ||        // Greenhouse
+        text === "apply for this position" ||
+        text.includes("apply for this") ||
+        text === "apply today" ||
+        text === "apply online" ||
+        text === "apply with linkedin" ||
+        text === "apply with indeed"
       ) {
         log("APPLY button clicked:", rawText);
         if (!lastDetectedJob) checkForNewJob();
+        applyButtonClicked = true;
+        savedThisSession = false;    // reset save flag for new apply session
+        clearTimeout(autoSaveTimer); // clear any old timer
         startApplyFlow();
         return; // Don't save — just start tracking
       }
@@ -572,17 +706,25 @@
       ) {
         log("FINAL SUBMIT clicked:", rawText);
         if (!lastDetectedJob) checkForNewJob();
+        submitButtonClicked = true;
         startApplyFlow(); // Ensure flow is active
+        scheduleAutoSave(); // 2-min backup in case confirmation never fires
         setTimeout(() => triggerSave("submit-button-click"), 2000);
         return;
       }
 
-      // Generic "Submit" or "Done" — only save if we're in an apply flow
-      if (
-        (text === "submit" || text === "done") && applyFlowActive
-      ) {
-        log("Generic submit/done clicked during apply flow:", rawText);
-        setTimeout(() => triggerSave("submit-button-click"), 2000);
+      // Generic "Submit" / "Done" / "Send" —
+      // Save if: (1) we're in an active apply flow, OR (2) both Apply + Submit were clicked
+      if (text === "submit" || text === "done" || text === "send") {
+        submitButtonClicked = true;
+        if (applyFlowActive || applyButtonClicked) {
+          log("Generic submit/done clicked — saving (applyFlow=" + applyFlowActive + ", applyClicked=" + applyButtonClicked + "):", rawText);
+          if (!lastDetectedJob) checkForNewJob();
+          scheduleAutoSave(); // 2-min backup
+          setTimeout(() => triggerSave("submit-button-click"), 2000);
+          return;
+        }
+        log("Generic submit/done ignored — no apply flow active and Apply not clicked:", rawText);
         return;
       }
 
@@ -707,6 +849,37 @@
   // ══════════════════════════════════════════════════
   // INIT
   // ══════════════════════════════════════════════════
+
+  // ── SHOW_SIDEBAR message from popup ──
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type !== "SHOW_SIDEBAR") return false;
+
+    let job = lastDetectedJob;
+    if (!job) {
+      const extracted = extractCurrentJob();
+      if (extracted) {
+        job = {
+          jobId: generateJobId(extracted.company, extracted.role),
+          company: extracted.company,
+          role: extracted.role,
+          platform: extracted.platform || detectPlatform(),
+          url: window.location.href,
+          location: extracted.location || "",
+          appliedAt: new Date().toISOString(),
+          status: "applied",
+        };
+        lastDetectedJob = job;
+      }
+    }
+
+    if (job && window.CrossTrackSidebar) {
+      window.CrossTrackSidebar.show(job);
+      sendResponse({ ok: true });
+    } else {
+      sendResponse({ ok: false, reason: "No job detected on this page" });
+    }
+    return true;
+  });
 
   log("=== CrossTrack v1.4 loaded on:", window.location.hostname, "===");
   log("Platform:", detectPlatform());

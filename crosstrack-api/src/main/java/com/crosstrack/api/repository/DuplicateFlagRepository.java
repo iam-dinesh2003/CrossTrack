@@ -13,4 +13,7 @@ public interface DuplicateFlagRepository extends JpaRepository<DuplicateFlag, Lo
     @Modifying
     @Query("DELETE FROM DuplicateFlag df WHERE df.application1.user.id = :userId OR df.application2.user.id = :userId")
     int deleteAllByUserId(@Param("userId") Long userId);
+
+    // Admin stats: count unresolved duplicate flags
+    long countByResolved(boolean resolved);
 }

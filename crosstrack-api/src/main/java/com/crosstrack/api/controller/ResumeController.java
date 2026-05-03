@@ -144,6 +144,34 @@ public class ResumeController {
         return ResponseEntity.ok(result);
     }
 
+    // ── Get Default Resume (for extension sidebar) ──
+    @GetMapping("/default")
+    public ResponseEntity<?> getDefault(Authentication auth) {
+        User user = getUser(auth);
+        Optional<ResumeVariant> defaultResume = resumeRepository.findByUserIdAndIsDefaultTrue(user.getId());
+        if (defaultResume.isEmpty()) {
+            // Fall back to most recently uploaded resume
+            List<ResumeVariant> all = resumeRepository.findByUserId(user.getId());
+            if (all.isEmpty()) {
+                return ResponseEntity.status(404).body(Map.of("error", "No resume found. Please upload one in CrossTrack."));
+            }
+            ResumeVariant last = all.get(all.size() - 1);
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", last.getId());
+            map.put("name", last.getName());
+            map.put("parsedText", last.getParsedText() != null ? last.getParsedText() : "");
+            map.put("isDefault", false);
+            return ResponseEntity.ok(map);
+        }
+        ResumeVariant r = defaultResume.get();
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("id", r.getId());
+        map.put("name", r.getName());
+        map.put("parsedText", r.getParsedText() != null ? r.getParsedText() : "");
+        map.put("isDefault", true);
+        return ResponseEntity.ok(map);
+    }
+
     // ── Set Default Resume ──
     @PutMapping("/{id}/default")
     public ResponseEntity<Map<String, String>> setDefault(Authentication auth, @PathVariable("id") Long id) {

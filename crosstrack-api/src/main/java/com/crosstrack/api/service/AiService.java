@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.crosstrack.api.dto.JobSearchResult;
 import com.crosstrack.api.model.*;
 import com.crosstrack.api.repository.*;
 import lombok.extern.slf4j.Slf4j;
@@ -93,6 +94,86 @@ public class AiService {
             "summary", response != null ? response : "AI service unavailable — check your API key",
             "matchingSkills", List.of(), "missingSkills", List.of(), "suggestions", List.of()
         ));
+    }
+
+    // ════════════════════════════════════════════
+    //  BATCH JOB MATCH SCORING (for Job Discovery)
+    // ════════════════════════════════════════════
+
+    /**
+     * Scores all jobs against the user's resume in a SINGLE Gemini call.
+     * Returns the same list with matchScore and matchReason populated.
+     * Falls back gracefully if AI is not configured or parsing fails.
+     */
+    public List<JobSearchResult> batchScoreJobs(String resumeText, List<JobSearchResult> jobs) {
+        if (!isConfigured() || jobs.isEmpty() || resumeText == null || resumeText.isBlank()) {
+            return jobs;
+        }
+
+        // Truncate resume to avoid token overload
+        String resumeSnippet = resumeText.length() > 800
+                ? resumeText.substring(0, 800) + "..."
+                : resumeText;
+
+        // Build numbered job list for the prompt
+        StringBuilder jobList = new StringBuilder();
+        for (int i = 0; i < jobs.size(); i++) {
+            JobSearchResult j = jobs.get(i);
+            String snip = j.getSnippet() != null
+                    ? j.getSnippet().substring(0, Math.min(160, j.getSnippet().length()))
+                    : "";
+            jobList.append(i).append(". ")
+                   .append(j.getTitle()).append(" at ").append(j.getCompany())
+                   .append(" — ").append(snip).append("\n");
+        }
+
+        String systemPrompt = """
+            You are a precise job-resume match scorer.
+            Given a resume and a numbered list of jobs, return ONLY a JSON object.
+            Keys = job index as string ("0","1",...), values = two-field objects with "score" (0-100 int) and "reason" (max 8 words).
+            Example: {"0":{"score":85,"reason":"Strong Java and Spring Boot match"},"1":{"score":42,"reason":"Missing cloud and DevOps skills"}}
+            No markdown, no explanation, no extra text.
+            """;
+
+        String userPrompt = "RESUME:\n" + resumeSnippet + "\n\nJOBS:\n" + jobList;
+
+        String response = callLlm(systemPrompt, userPrompt);
+
+        try {
+            String cleaned = response == null ? "" : response.trim();
+            if (cleaned.startsWith("```")) {
+                int nl = cleaned.indexOf('\n');
+                if (nl > 0) cleaned = cleaned.substring(nl + 1);
+                if (cleaned.endsWith("```")) cleaned = cleaned.substring(0, cleaned.length() - 3).trim();
+            }
+            if (!cleaned.startsWith("{")) {
+                log.warn("[BatchScore] Non-JSON response, skipping scoring");
+                return jobs;
+            }
+
+            Map<String, Object> parsed = objectMapper.readValue(cleaned, Map.class);
+            List<JobSearchResult> scored = new ArrayList<>(jobs);
+
+            for (int i = 0; i < scored.size(); i++) {
+                Object entry = parsed.get(String.valueOf(i));
+                if (entry instanceof Map<?, ?> map) {
+                    Object scoreObj  = map.get("score");
+                    Object reasonObj = map.get("reason");
+                    int score = scoreObj instanceof Number ? ((Number) scoreObj).intValue() : 0;
+                    String reason = reasonObj != null ? reasonObj.toString() : "";
+                    scored.set(i, scored.get(i).toBuilder()
+                            .matchScore(score)
+                            .matchReason(reason)
+                            .build());
+                }
+            }
+            log.info("[BatchScore] Scored {} jobs successfully", scored.size());
+            return scored;
+
+        } catch (Exception e) {
+            log.warn("[BatchScore] Failed to parse scores: {}", e.getMessage());
+            return jobs; // return unscored — no crash
+        }
     }
 
     // ════════════════════════════════════════════

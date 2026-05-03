@@ -103,7 +103,7 @@ function checkDuplicate(company, role, applications) {
 
 // ─── API Configuration ───
 
-const API_BASE = "https://crosstrack-production.up.railway.app/api";
+const API_BASE = "http://localhost:8080/api";
 
 async function getApiToken() {
   const data = await chrome.storage.local.get("apiToken");
@@ -260,8 +260,47 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
 
       case "GET_APPLICATIONS": {
-        const apps = await getApplications();
-        return { applications: apps };
+        // Always try to fetch fresh data from backend first (source of truth)
+        const freshToken = await getApiToken();
+        if (freshToken) {
+          try {
+            const apiResp = await fetch(`${API_BASE}/applications`, {
+              headers: { "Authorization": `Bearer ${freshToken}` },
+            });
+            // 401/403 = token is expired or invalid — clear it and force re-login
+            if (apiResp.status === 401 || apiResp.status === 403) {
+              await clearApiToken();
+              return { applications: [], error: "session_expired" };
+            }
+            if (apiResp.ok) {
+              const apiApps = await apiResp.json();
+              // Map backend format → extension format
+              const mapped = apiApps.map(a => ({
+                jobId: `api-${a.id}`,
+                company: a.company || "Unknown Company",
+                role: a.role || "Unknown Role",
+                platform: (a.platform || "OTHER").toLowerCase(),
+                status: (a.status || "applied").toLowerCase(),
+                url: a.url || "",
+                location: a.location || "",
+                appliedAt: a.appliedAt || a.createdAt || new Date().toISOString(),
+                source: a.source || "EMAIL",
+                apiId: a.id,
+              }));
+              // Save fresh data into local storage so offline reads are current
+              await chrome.storage.local.set({ applications: mapped });
+              await updateBadge();
+              return { applications: mapped };
+            }
+          } catch (e) {
+            // Network error — backend is offline, serve local cache with a flag
+            console.log("[CrossTrack] Backend offline, using local cache:", e.message);
+            const cached = await getApplications();
+            return { applications: cached, error: "offline" };
+          }
+        }
+        // Not logged in — return empty (no cached stale data)
+        return { applications: [], error: "not_logged_in" };
       }
 
       case "CHECK_DUPLICATE": {
@@ -334,24 +373,68 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       // ── Sidebar AI actions ──
 
+      case "GET_RESUMES": {
+        const listToken = await getApiToken();
+        if (!listToken) return { error: "Not logged in." };
+        try {
+          const resp = await fetch(`${API_BASE}/resumes`, {
+            headers: { "Authorization": `Bearer ${listToken}` },
+          });
+          if (!resp.ok) return { error: `Backend returned ${resp.status} — is CrossTrack server running on :8080?` };
+          const resumes = await resp.json();
+          return { resumes };
+        } catch (e) {
+          return { error: "Network error fetching resumes." };
+        }
+      }
+
       case "GET_ATS_SCORE": {
         const atsToken = await getApiToken();
         if (!atsToken) return { error: "Not logged in to CrossTrack." };
 
-        // Fetch default resume text (cache in session storage to avoid repeated calls)
-        let resumeText = await getCachedResumeText();
-        if (!resumeText) {
+        // If a specific resumeId is provided, always fetch that resume fresh (no cache)
+        const selectedResumeId = message.data.resumeId || null;
+        let resumeText = null;
+        let resumeName = null;
+
+        if (selectedResumeId) {
+          // User explicitly selected a resume — fetch it by ID
           try {
-            const resumeResp = await fetch(`${API_BASE}/resumes/default`, {
+            const resumeResp = await fetch(`${API_BASE}/resumes/${selectedResumeId}/text`, {
               headers: { "Authorization": `Bearer ${atsToken}` },
             });
-            if (!resumeResp.ok) return { error: "No default resume found. Please upload one in CrossTrack." };
+            if (!resumeResp.ok) return { error: "Failed to load selected resume." };
             const resumeData = await resumeResp.json();
-            resumeText = resumeData.parsedText || "";
-            if (!resumeText) return { error: "Resume has no parsed text. Please re-upload your resume." };
+            resumeName = resumeData.name || null;
+            resumeText = resumeData.parsedText || resumeData.text || "";
+            if (!resumeText) return { error: "Selected resume has no text. Re-upload it in CrossTrack." };
+            // Cache the newly selected resume
             await cacheResumeText(resumeText);
+            await chrome.storage.session.set({ cachedResumeName: resumeName, cachedResumeId: selectedResumeId });
           } catch (e) {
-            return { error: "Failed to fetch resume from CrossTrack." };
+            return { error: "Failed to fetch selected resume." };
+          }
+        } else {
+          // No specific resume — use cache or default
+          resumeText = await getCachedResumeText();
+          if (!resumeText) {
+            try {
+              const resumeResp = await fetch(`${API_BASE}/resumes/default`, {
+                headers: { "Authorization": `Bearer ${atsToken}` },
+              });
+              if (!resumeResp.ok) return { error: "No default resume found. Upload one in CrossTrack dashboard first." };
+              const resumeData = await resumeResp.json();
+              resumeName = resumeData.name || null;
+              resumeText = resumeData.parsedText || "";
+              if (!resumeText) return { error: "Resume has no text. Please re-upload your resume in CrossTrack." };
+              await cacheResumeText(resumeText);
+              await chrome.storage.session.set({ cachedResumeName: resumeName });
+            } catch (e) {
+              return { error: "Failed to fetch resume from CrossTrack." };
+            }
+          } else {
+            const cached = await chrome.storage.session.get("cachedResumeName");
+            resumeName = cached.cachedResumeName || null;
           }
         }
 
@@ -369,7 +452,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           });
           if (scoreResp.status === 429) return { error: "Daily AI limit reached. Resets at midnight." };
           if (!scoreResp.ok) return { error: "Score request failed." };
-          return await scoreResp.json();
+          const result = await scoreResp.json();
+          // Attach the resume name so the sidebar can show it
+          result.resumeName = resumeName;
+          return result;
         } catch (e) {
           return { error: "Network error reaching CrossTrack API." };
         }

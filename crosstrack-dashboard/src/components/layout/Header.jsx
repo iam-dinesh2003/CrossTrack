@@ -1,10 +1,10 @@
 import { useAuth } from '../../context/AuthContext';
-import { Bell, Command } from 'lucide-react';
+import { Bell, Command, Menu } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import followUpService from '../../services/followUpService';
 
-export default function Header({ title, subtitle }) {
+export default function Header({ title, subtitle, onMenuClick }) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -19,16 +19,26 @@ export default function Header({ title, subtitle }) {
   const dateStr = today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
   return (
-    <header className="fixed top-0 left-[260px] right-0 h-[68px] header-frosted flex items-center justify-between px-8 z-30">
+    <header className="fixed top-0 left-0 md:left-[260px] right-0 h-[68px] header-frosted flex items-center justify-between px-4 sm:px-8 z-30">
       {/* Bottom border gradient */}
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-200/80 to-transparent" />
 
-      <div>
-        <h2 className="text-lg font-bold text-gray-900 tracking-tight">{title || 'Dashboard'}</h2>
-        {subtitle && <p className="text-[11px] text-gray-400 font-medium mt-0.5">{subtitle}</p>}
+      <div className="flex items-center gap-3">
+        {/* Hamburger — mobile only */}
+        <button
+          onClick={onMenuClick}
+          className="md:hidden p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-xl transition-all"
+          aria-label="Open menu">
+          <Menu size={20} />
+        </button>
+
+        <div>
+          <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">{title || 'Dashboard'}</h2>
+          {subtitle && <p className="hidden sm:block text-[11px] text-gray-400 font-medium mt-0.5">{subtitle}</p>}
+        </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* Date */}
         <span className="hidden lg:block text-[11px] text-gray-400 font-medium tracking-wide">{dateStr}</span>
 
