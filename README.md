@@ -78,7 +78,8 @@ Job searching in 2025+ is broken:
 
 | Dashboard | Kanban Board |
 |-----------|-------------|
-| ![Dashboard](screenshots/dashboard.png) | ![Kanban](screenshots/kanban.png) |
+<img width="3016" height="1742" alt="image" src="https://github.com/user-attachments/assets/769f129e-e4c4-4efb-80b7-00da48dfee47" />
+
 | Real-time stats, weekly trend chart, platform breakdown | Drag-and-drop pipeline across Applied → Interview → Offer → Rejected |
 
 | AI Career Coach | Analytics |
