@@ -831,8 +831,8 @@ public class GmailService {
             long lookbackTime = Math.min(lastSyncEpoch, thirtyDaysAgo);
             query.append(" after:").append(lookbackTime);
         } else {
-            long ninetyDaysAgo = Instant.now().getEpochSecond() - (90L * 24 * 60 * 60);
-            query.append(" after:").append(ninetyDaysAgo);
+            // First scan: use 30 days to keep it fast (subsequent scans use lastSync)
+            query.append(" after:").append(thirtyDaysAgo);
         }
 
         query.append(" -in:sent -in:drafts -in:spam");
@@ -857,7 +857,7 @@ public class GmailService {
             }
             pageToken = response.getNextPageToken();
 
-            if (allMessages.size() >= 500) break;
+            if (allMessages.size() >= 100) break;
 
         } while (pageToken != null);
 

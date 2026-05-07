@@ -13,8 +13,9 @@ export const getGmailStatus = () =>
   api.get('/gmail/status').then(res => res.data);
 
 // Trigger email scan (scans ALL connected accounts)
+// Long timeout — scan reads emails + runs AI classification (can take 60-120s)
 export const scanEmails = () =>
-  api.post('/gmail/scan').then(res => res.data);
+  api.post('/gmail/scan', {}, { timeout: 180000 }).then(res => res.data);
 
 // Disconnect ALL Gmail accounts
 export const disconnectGmail = () =>
