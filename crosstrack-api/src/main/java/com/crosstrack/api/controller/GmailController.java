@@ -30,6 +30,9 @@ public class GmailController {
     @Value("${spring.mail.username:}")
     private String fromEmail;
 
+    @Value("${frontend.url:http://localhost:5174}")
+    private String frontendUrl;
+
     private static final String DEVELOPER_EMAIL = "dineshnannapaneni9@gmail.com";
 
     private Long getUserId(Authentication auth) {
@@ -55,7 +58,7 @@ public class GmailController {
      */
     @GetMapping("/callback")
     public ResponseEntity<String> handleCallback(@RequestParam("code") String code) {
-        String redirectUrl = "http://localhost:5174/gmail-callback?code=" + code;
+        String redirectUrl = frontendUrl + "/gmail-callback?code=" + code;
         String html = """
             <!DOCTYPE html>
             <html>
