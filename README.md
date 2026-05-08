@@ -52,25 +52,18 @@ Deployed on AWS: **Elastic Beanstalk (Corretto 17)** + **RDS MySQL** + **CloudFr
 
 | Dashboard | Applications |
 |-----------|-------------|
-| <img width="1508" alt="CrossTrack Dashboard" src="https://github.com/user-attachments/assets/769f129e-e4c4-4efb-80b7-00da48dfee47" /> | ![Applications](screenshots/applications.png) |
-| Real-time stat cards, weekly trend chart, platform breakdown, upcoming follow-ups | Full CRUD with search, filter by status/platform, inline edits |
+| ![Dashboard](screenshots/dashboard.jpg) | ![Applications](screenshots/applications.jpg) |
+| Real-time stat cards, weekly trend chart, platform breakdown, upcoming follow-ups | Full CRUD with search, filter by status/platform, inline status edits |
 
-| Kanban Board | AI Career Coach |
-|-------------|----------------|
-| ![Kanban](screenshots/kanban.png) | ![Coach](screenshots/coach.png) |
-| Drag-and-drop pipeline: Applied → Interview → Offer → Rejected → Ghosted | Persistent-memory coach with full application context and personalized advice |
+| Kanban Board | Job Discovery |
+|-------------|---------------|
+| ![Kanban](screenshots/kanban.jpg) | ![Job Discovery](screenshots/job-discovery.jpg) |
+| Drag-and-drop pipeline: Applied → Interview → Offer → Rejected → Ghosted | AI matches jobs from 20+ portals to your resume — only last 3 days |
 
-| Mock Interview | Analytics |
-|----------------|-----------|
-| ![Mock Interview](screenshots/mock-interview.png) | ![Analytics](screenshots/analytics.png) |
-| AI-driven Q&A with per-answer scoring and overall assessment | Response rates, platform success, ghost detection patterns |
-
-| Chrome Extension | Gmail Sync |
-|-----------------|------------|
-| ![Extension](screenshots/extension.png) | ![Gmail](screenshots/gmail.png) |
-| One-click capture with fuzzy duplicate detection | Multi-account scan with 7-layer AI email classification |
-
-> 📸 **To update screenshots:** drag new images onto GitHub's issue editor to get a hosted URL, then paste it above.
+| Mock Interview |
+|----------------|
+| ![Mock Interview](screenshots/mock-interview.jpg) |
+| AI-driven Q&A with per-answer scoring and overall assessment — Behavioral, Technical, or Mixed |
 
 ---
 
